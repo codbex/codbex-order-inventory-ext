@@ -1,0 +1,10 @@
+{
+    "guid": "codbex-order-inventory-ext",
+    "repository": {
+        "type": "git",
+        "branch": "main",
+        "url": "https://github.com/codbex/codbex-order-inventory-ext.git"
+    },
+    "dependencies": [],
+    "actions": []
+}
