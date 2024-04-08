@@ -1,17 +1,16 @@
 const app = angular.module('templateApp', []);
-app.controller('templateContoller', function ($scope, $http) {
-    let url_string = (window.location.href).toLowerCase();
-    let url = new URL(url_string);
-    let id = url.searchParams.get("id");
+app.controller('templateContoller', ['$scope', '$http', 'ViewParameters', function ($scope, $http, ViewParameters) {
+    const params = ViewParameters.get();
     $scope.showDialog = true;
 
-    const purchaseOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsReceipt/api/GenerateGoodsReceiptService.ts/purchaseOrderData/" + id;
+
+    const purchaseOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsReceipt/api/GenerateGoodsReceiptService.ts/purchaseOrderData/" + params.id;
     $http.get(purchaseOrderDataUrl)
         .then(function (response) {
             $scope.PurchaseOrderData = response.data;
         });
 
-    const purchaseOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsReceipt/api/GenerateGoodsReceiptService.ts/purchaseOrderItemsData/" + id;
+    const purchaseOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsReceipt/api/GenerateGoodsReceiptService.ts/purchaseOrderItemsData/" + params.id;
     $http.get(purchaseOrderItemsUrl)
         .then(function (response) {
             $scope.PurchaseOrderItemsData = response.data;
@@ -67,4 +66,4 @@ app.controller('templateContoller', function ($scope, $http) {
 
     // Display the dialog when the page loads
     document.getElementById("dialog").style.display = "block";
-});
+}]);

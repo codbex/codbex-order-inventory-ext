@@ -1,17 +1,15 @@
 const app = angular.module('templateApp', []);
-app.controller('templateContoller', function ($scope, $http) {
-    let url_string = (window.location.href).toLowerCase();
-    let url = new URL(url_string);
-    let id = url.searchParams.get("id");
+app.controller('templateContoller', ['$scope', '$http', 'ViewParameters', function ($scope, $http, ViewParameters) {
+    const params = ViewParameters.get();
     $scope.showDialog = true;
 
-    const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + id;
+    const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + params.id;
     $http.get(salesOrderDataUrl)
         .then(function (response) {
             $scope.SalesOrderData = response.data;
         });
 
-    const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + id;
+    const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
             $scope.SalesOrderItemsData = response.data;
@@ -67,4 +65,4 @@ app.controller('templateContoller', function ($scope, $http) {
 
     // Display the dialog when the page loads
     document.getElementById("dialog").style.display = "block";
-});
+}]);
