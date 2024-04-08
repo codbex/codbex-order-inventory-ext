@@ -1,5 +1,5 @@
-const app = angular.module('templateApp', []);
-app.controller('templateContoller', ['$scope', '$http', 'ViewParameters', function ($scope, $http, ViewParameters) {
+const app = angular.module('templateApp', ['ideUI', 'ideView']);
+app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'messageHub', function ($scope, $http, ViewParameters, messageHub) {
     const params = ViewParameters.get();
     $scope.showDialog = true;
 
@@ -61,6 +61,7 @@ app.controller('templateContoller', ['$scope', '$http', 'ViewParameters', functi
 
     $scope.closeDialog = function () {
         $scope.showDialog = false;
+        messageHub.closeDialogWindow("goods-issue-generate");
     };
 
     // Display the dialog when the page loads

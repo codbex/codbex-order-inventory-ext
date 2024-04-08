@@ -1,8 +1,7 @@
-const app = angular.module('templateApp', []);
-app.controller('templateContoller', ['$scope', '$http', 'ViewParameters', function ($scope, $http, ViewParameters) {
+const app = angular.module('templateApp', ['ideUI', 'ideView']);
+app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'messageHub', function ($scope, $http, ViewParameters, messageHub) {
     const params = ViewParameters.get();
     $scope.showDialog = true;
-
 
     const purchaseOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsReceipt/api/GenerateGoodsReceiptService.ts/purchaseOrderData/" + params.id;
     $http.get(purchaseOrderDataUrl)
@@ -62,6 +61,7 @@ app.controller('templateContoller', ['$scope', '$http', 'ViewParameters', functi
 
     $scope.closeDialog = function () {
         $scope.showDialog = false;
+        messageHub.closeDialogWindow("goods-receipt-generate");
     };
 
     // Display the dialog when the page loads
