@@ -24,7 +24,8 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             "Currency": $scope.SalesOrderData.Currency,
             "Gross": $scope.SalesOrderData.Gross,
             "VAT": $scope.SalesOrderData.VAT,
-            "Reference": $scope.SalesOrderData.UUID
+            "Reference": $scope.SalesOrderData.UUID,
+            "Store": $scope.SalesOrderData.Store
         };
 
         $http.post(goodsIssueUrl, entity)
@@ -32,6 +33,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                 $scope.GoodsIssue = response.data
 
                 if (!angular.equals($scope.OrderItems, {})) {
+                    console.log($scope.OrderItems);
                     $scope.SalesOrderItemsData.forEach(orderItem => {
                         const goodsIssueItem = {
                             "GoodsIssue": $scope.GoodsIssue.Id,

@@ -37,7 +37,8 @@ class GenerateGoodsIssueService {
             "Company": salesOrder.Company,
             "SalesOrderStatus": 1,
             "Operator": salesOrder.Operator,
-            "Reference": salesOrder.UUID
+            "Reference": salesOrder.UUID,
+            "Store": salesOrder.Store
         };
     }
 
