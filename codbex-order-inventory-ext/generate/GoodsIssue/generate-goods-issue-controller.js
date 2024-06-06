@@ -7,33 +7,34 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $http.get(salesOrderDataUrl)
         .then(function (response) {
             $scope.SalesOrderData = response.data;
+            console.log("Sales order data retrieved: ", $scope.SalesOrderData);
+        })
+        .catch(function (error) {
+            console.error("Error retrieving sales order data:", error);
         });
 
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
             $scope.SalesOrderItemsData = response.data;
+            console.log("Sales order items data retrieved: ", $scope.SalesOrderItemsData);
+        })
+        .catch(function (error) {
+            console.error("Error retrieving sales order items data:", error);
         });
 
     $scope.generateGoodsIssue = function () {
         const goodsIssueUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueService.ts/";
-        const entity = {
-            "Date": $scope.SalesOrderData.Date,
-            "Net": $scope.SalesOrderData.Net,
-            "Company": $scope.SalesOrderData.Company,
-            "Currency": $scope.SalesOrderData.Currency,
-            "Gross": $scope.SalesOrderData.Gross,
-            "VAT": $scope.SalesOrderData.VAT,
-            "Reference": $scope.SalesOrderData.UUID,
-            "Store": $scope.SalesOrderData.Store
-        };
 
-        $http.post(goodsIssueUrl, entity)
+        console.log("Generating goods issue with the following sales order data:", $scope.SalesOrderData);
+        $http.post(goodsIssueUrl, $scope.SalesOrderData)
             .then(function (response) {
-                $scope.GoodsIssue = response.data
+                $scope.GoodsIssue = response.data;
+                console.log("Goods issue created successfully:", $scope.GoodsIssue);
 
-                if (!angular.equals($scope.OrderItems, {})) {
-                    console.log($scope.OrderItems);
+                if ($scope.SalesOrderItemsData && $scope.SalesOrderItemsData.length > 0) {
+                    console.log("Transferring sales order items to the goods issue...");
+
                     $scope.SalesOrderItemsData.forEach(orderItem => {
                         const goodsIssueItem = {
                             "GoodsIssue": $scope.GoodsIssue.Id,
@@ -45,20 +46,19 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                             "VAT": orderItem.VAT,
                             "Gross": orderItem.Gross
                         };
-                        const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueItemService.ts/"
-                        $http.post(goodsIssueItemUrl, goodsIssueItem)
+                        const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueItemService.ts/";
+                        console.log("Sending POST request to goodsIssueItemUrl with item:", goodsIssueItem);
+                        $http.post(goodsIssueItemUrl, goodsIssueItem);
                     });
                 }
-
-                console.log("GoodsIssue created successfully:", response.data);
-                //alert("GoodsIssue created successfully");
+                console.log("Goods Issue created successfully: ", response.data);
+                $scope.closeDialog();
             })
             .catch(function (error) {
-                console.error("Error creating GoodsIssue:", error);
-                //alert("Error creating sales GoodsIssue: ");
+                console.error("Error creating goods issue:", error);
+                $scope.closeDialog();
             });
 
-        $scope.closeDialog();
     };
 
     $scope.closeDialog = function () {
