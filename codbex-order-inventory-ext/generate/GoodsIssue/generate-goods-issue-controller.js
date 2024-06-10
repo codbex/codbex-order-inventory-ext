@@ -3,6 +3,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const params = ViewParameters.get();
     $scope.showDialog = true;
 
+    // Fetch sales order data
     const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + params.id;
     $http.get(salesOrderDataUrl)
         .then(function (response) {
@@ -13,6 +14,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             console.error("Error retrieving sales order data:", error);
         });
 
+    // Fetch sales order items data
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
@@ -26,16 +28,17 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $scope.generateGoodsIssue = function () {
         const goodsIssueUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueService.ts/";
 
-        console.log("Generating goods issue with the following sales order data:", $scope.SalesOrderData);
+        // Create goods issue
         $http.post(goodsIssueUrl, $scope.SalesOrderData)
             .then(function (response) {
                 $scope.GoodsIssue = response.data;
                 console.log("Goods issue created successfully:", $scope.GoodsIssue);
 
-                if ($scope.SalesOrderItemsData && $scope.SalesOrderItemsData.length > 0) {
-                    console.log("Transferring sales order items to the goods issue...");
+                const itemsForIssue = $scope.SalesOrderItemsData.ItemsForIssue;
+                if (itemsForIssue && itemsForIssue.length > 0) {
+                    console.log("Transferring items to the goods issue...");
 
-                    $scope.SalesOrderItemsData.forEach(orderItem => {
+                    itemsForIssue.forEach(orderItem => {
                         const goodsIssueItem = {
                             "GoodsIssue": $scope.GoodsIssue.Id,
                             "Product": orderItem.Product,
@@ -48,17 +51,28 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                         };
                         const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueItemService.ts/";
                         console.log("Sending POST request to goodsIssueItemUrl with item:", goodsIssueItem);
-                        $http.post(goodsIssueItemUrl, goodsIssueItem);
+                        $http.post(goodsIssueItemUrl, goodsIssueItem)
+                            .then(function (response) {
+                                console.log("Item transferred successfully:", response.data);
+                            })
+                            .catch(function (error) {
+                                console.error("Error transferring item:", error);
+                            });
                     });
                 }
-                console.log("Goods Issue created successfully: ", response.data);
+
+                const itemsToRestock = $scope.SalesOrderItemsData.ItemsToRestock;
+                if (itemsToRestock && itemsToRestock.length > 0) {
+                    console.log("Items that need to be restocked:", itemsToRestock);
+                }
+
                 $scope.closeDialog();
             })
             .catch(function (error) {
                 console.error("Error creating goods issue:", error);
+                alert('Error creating goods issue: ' + error.message);
                 $scope.closeDialog();
             });
-
     };
 
     $scope.closeDialog = function () {
