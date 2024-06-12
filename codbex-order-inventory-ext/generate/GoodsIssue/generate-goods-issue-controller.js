@@ -3,6 +3,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const params = ViewParameters.get();
     $scope.showDialog = true;
 
+    // Fetch sales order data
     const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + params.id;
     $http.get(salesOrderDataUrl)
         .then(function (response) {
@@ -12,6 +13,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             console.error("Error retrieving sales order data:", error);
         });
 
+    // Fetch sales order items data
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
@@ -29,8 +31,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                 $scope.GoodsIssue = response.data;
 
                 if ($scope.SalesOrderItemsData && $scope.SalesOrderItemsData.length > 0) {
-
-                    $scope.SalesOrderItemsData.forEach(orderItem => {
+                    itemsForIssue.forEach(orderItem => {
                         const goodsIssueItem = {
                             "GoodsIssue": $scope.GoodsIssue.Id,
                             "Product": orderItem.Product,
@@ -50,9 +51,9 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             })
             .catch(function (error) {
                 console.error("Error creating GoodsIssue:", error);
+
                 $scope.closeDialog();
             });
-
     };
 
     $scope.closeDialog = function () {
