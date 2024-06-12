@@ -7,7 +7,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $http.get(salesOrderDataUrl)
         .then(function (response) {
             $scope.SalesOrderData = response.data;
-            console.log("Sales order data retrieved: ", $scope.SalesOrderData);
         })
         .catch(function (error) {
             console.error("Error retrieving sales order data:", error);
@@ -17,7 +16,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
             $scope.SalesOrderItemsData = response.data;
-            console.log("Sales order items data retrieved: ", $scope.SalesOrderItemsData);
         })
         .catch(function (error) {
             console.error("Error retrieving sales order items data:", error);
@@ -26,14 +24,11 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $scope.generateGoodsIssue = function () {
         const goodsIssueUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueService.ts/";
 
-        console.log("Generating goods issue with the following sales order data:", $scope.SalesOrderData);
         $http.post(goodsIssueUrl, $scope.SalesOrderData)
             .then(function (response) {
                 $scope.GoodsIssue = response.data;
-                console.log("Goods issue created successfully:", $scope.GoodsIssue);
 
                 if ($scope.SalesOrderItemsData && $scope.SalesOrderItemsData.length > 0) {
-                    console.log("Transferring sales order items to the goods issue...");
 
                     $scope.SalesOrderItemsData.forEach(orderItem => {
                         const goodsIssueItem = {
@@ -47,15 +42,14 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                             "Gross": orderItem.Gross
                         };
                         const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueItemService.ts/";
-                        console.log("Sending POST request to goodsIssueItemUrl with item:", goodsIssueItem);
                         $http.post(goodsIssueItemUrl, goodsIssueItem);
                     });
                 }
-                console.log("Goods Issue created successfully: ", response.data);
+                console.log("GoodsIssue created successfully:", response.data);
                 $scope.closeDialog();
             })
             .catch(function (error) {
-                console.error("Error creating goods issue:", error);
+                console.error("Error creating GoodsIssue:", error);
                 $scope.closeDialog();
             });
 
