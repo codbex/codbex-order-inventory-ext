@@ -24,7 +24,8 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             "Currency": $scope.PurchaseOrderData.Currency,
             "Gross": $scope.PurchaseOrderData.Gross,
             "VAT": $scope.PurchaseOrderData.VAT,
-            "Reference": $scope.PurchaseOrderData.UUID
+            "Reference": $scope.PurchaseOrderData.UUID,
+            "Store": $scope.PurchaseOrderData.Store
         };
 
         $http.post(goodsReceiptUrl, entity)
