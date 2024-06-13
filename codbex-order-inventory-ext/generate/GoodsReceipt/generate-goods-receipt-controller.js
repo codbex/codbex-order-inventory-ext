@@ -7,32 +7,28 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $http.get(purchaseOrderDataUrl)
         .then(function (response) {
             $scope.PurchaseOrderData = response.data;
+        })
+        .catch(function (error) {
+            console.error("Error retrieving purchase order data:", error);
         });
 
     const purchaseOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsReceipt/api/GenerateGoodsReceiptService.ts/purchaseOrderItemsData/" + params.id;
     $http.get(purchaseOrderItemsUrl)
         .then(function (response) {
             $scope.PurchaseOrderItemsData = response.data;
+        })
+        .catch(function (error) {
+            console.error("Error retrieving purchase order items data:", error);
         });
 
     $scope.generateGoodsReceipt = function () {
         const goodsReceiptUrl = "/services/ts/codbex-inventory/gen/api/GoodsReceipts/GoodsReceiptService.ts/";
-        const entity = {
-            "Date": $scope.PurchaseOrderData.Date,
-            "Net": $scope.PurchaseOrderData.Net,
-            "Company": $scope.PurchaseOrderData.Company,
-            "Currency": $scope.PurchaseOrderData.Currency,
-            "Gross": $scope.PurchaseOrderData.Gross,
-            "VAT": $scope.PurchaseOrderData.VAT,
-            "Reference": $scope.PurchaseOrderData.UUID,
-            "Store": $scope.PurchaseOrderData.Store
-        };
 
-        $http.post(goodsReceiptUrl, entity)
+        $http.post(goodsReceiptUrl, $scope.PurchaseOrderData)
             .then(function (response) {
                 $scope.GoodsReceipt = response.data
 
-                if (!angular.equals($scope.OrderItems, {})) {
+                if ($scope.PurchaseOrderItemsData && $scope.PurchaseOrderItemsData.length > 0) {
                     $scope.PurchaseOrderItemsData.forEach(orderItem => {
                         const goodsReceiptItem = {
                             "GoodsReceipt": $scope.GoodsReceipt.Id,
@@ -51,13 +47,13 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
 
                 console.log("GoodsReceipt created successfully:", response.data);
                 //alert("GoodsReceipt created successfully");
+                $scope.closeDialog();
             })
             .catch(function (error) {
                 console.error("Error creating GoodsReceipt:", error);
                 //alert("Error creating purchase GoodsReceipt: ");
+                $scope.closeDialog();
             });
-
-        $scope.closeDialog();
     };
 
     $scope.closeDialog = function () {
@@ -65,6 +61,5 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
         messageHub.closeDialogWindow("goods-receipt-generate");
     };
 
-    // Display the dialog when the page loads
     document.getElementById("dialog").style.display = "block";
 }]);
