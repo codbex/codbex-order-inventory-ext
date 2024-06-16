@@ -3,7 +3,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const params = ViewParameters.get();
     $scope.showDialog = true;
 
-    // Fetch sales order data
     const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + params.id;
     $http.get(salesOrderDataUrl)
         .then(function (response) {
@@ -13,7 +12,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             console.error("Error retrieving sales order data:", error);
         });
 
-    // Fetch sales order items data
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
@@ -61,6 +59,5 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
         messageHub.closeDialogWindow("goods-issue-generate");
     };
 
-    // Display the dialog when the page loads
     document.getElementById("dialog").style.display = "block";
 }]);

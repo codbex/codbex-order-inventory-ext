@@ -37,7 +37,8 @@ class GenerateGoodsReceiptService {
             "Company": purchaseOrder.Company,
             "PurchaseOrderStatus": 1,
             "Operator": purchaseOrder.Operator,
-            "Reference": purchaseOrder.UUID
+            "Reference": purchaseOrder.UUID,
+            "Store": purchaseOrder.Store
         };
     }
 
