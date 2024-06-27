@@ -22,14 +22,16 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
         });
 
     $scope.generateGoodsReceipt = function () {
-        const goodsReceiptUrl = "/services/ts/codbex-inventory/gen/api/GoodsReceipts/GoodsReceiptService.ts/";
+        const items = $scope.PurchaseOrderItemsData;
+
+        const goodsReceiptUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsReceipts/GoodsReceiptService.ts/";
 
         $http.post(goodsReceiptUrl, $scope.PurchaseOrderData)
             .then(function (response) {
                 $scope.GoodsReceipt = response.data
 
                 if ($scope.PurchaseOrderItemsData && $scope.PurchaseOrderItemsData.length > 0) {
-                    $scope.PurchaseOrderItemsData.forEach(orderItem => {
+                    items.forEach(orderItem => {
                         const goodsReceiptItem = {
                             "GoodsReceipt": $scope.GoodsReceipt.Id,
                             "Product": orderItem.Product,
@@ -40,7 +42,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                             "VAT": orderItem.VAT,
                             "Gross": orderItem.Gross
                         };
-                        const goodsReceiptItemUrl = "/services/ts/codbex-inventory/gen/api/GoodsReceipts/GoodsReceiptItemService.ts/"
+                        const goodsReceiptItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsReceipts/GoodsReceiptItemService.ts/"
                         $http.post(goodsReceiptItemUrl, goodsReceiptItem)
                     });
                 }
