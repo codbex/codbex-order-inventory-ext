@@ -63,36 +63,40 @@ class GenerateGoodsIssueService {
         let itemsToRestock = [];
 
         for (let item of salesOrderItems) {
-            const catalogueRecords = this.catalogueRepositoryDao.findAll({
-                $filter: {
-                    equals: {
-                        Store: salesOrder.Store,
-                        Product: item.Product,
+            if (item.SalesOrderItemStatus != 2) {
+                const catalogueRecords = this.catalogueRepositoryDao.findAll({
+                    $filter: {
+                        equals: {
+                            Store: salesOrder.Store,
+                            Product: item.Product,
+                        },
                     },
-                },
-            });
-            if (catalogueRecords.length > 0) {
-                const catalogueRecord = catalogueRecords[0];
-                if (catalogueRecord.Quantity >= item.Quantity) {
-                    item.SalesOrderItemStatus = 2;
-                    this.salesOrderItemDao.update(item);
-                    itemsInStock.push(item);
-                } else if (catalogueRecord.Quantity > 0) {
-                    let partialOrder = { ...item, Quantity: catalogueRecord.Quantity, SalesOrderItemStatus: 2 };
-                    this.salesOrderItemDao.update(partialOrder);
-                    let restockOrder = { ...item, Quantity: item.Quantity - catalogueRecord.Quantity, SalesOrderItemStatus: 3 };
-                    this.salesOrderItemDao.create(restockOrder);
-                    itemsInStock.push(partialOrder);
-                    itemsToRestock.push(restockOrder);
+                });
+                if (catalogueRecords.length > 0) {
+                    const catalogueRecord = catalogueRecords[0];
+                    if (catalogueRecord.Quantity >= item.Quantity) {
+                        item.SalesOrderItemStatus = 2;
+                        this.salesOrderItemDao.update(item);
+                        itemsInStock.push(item);
+                    } else if (catalogueRecord.Quantity > 0) {
+                        let partialOrder = { ...item, Quantity: catalogueRecord.Quantity, SalesOrderItemStatus: 2 };
+                        this.salesOrderItemDao.update(partialOrder);
+                        let restockOrder = { ...item, Quantity: item.Quantity - catalogueRecord.Quantity };
+                        this.salesOrderItemDao.create(restockOrder);
+                        restockOrder.SalesOrderItemStatus = 3;
+                        this.salesOrderItemDao.update(restockOrder);
+                        itemsInStock.push(partialOrder);
+                        itemsToRestock.push(restockOrder);
+                    } else {
+                        item.SalesOrderItemStatus = 3;
+                        this.salesOrderItemDao.update(item);
+                        itemsToRestock.push(item);
+                    }
                 } else {
                     item.SalesOrderItemStatus = 3;
                     this.salesOrderItemDao.update(item);
                     itemsToRestock.push(item);
                 }
-            } else {
-                item.SalesOrderItemStatus = 3;
-                this.salesOrderItemDao.update(item);
-                itemsToRestock.push(item);
             }
         }
 
