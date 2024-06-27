@@ -79,12 +79,12 @@ class GenerateGoodsIssueService {
                         this.salesOrderItemDao.update(item);
                         itemsInStock.push(item);
                     } else if (catalogueRecord.Quantity > 0) {
+                        let restockOrder = { ...item, Quantity: item.Quantity - catalogueRecord.Quantity, SalesOrderItemStatus: 3 };
+                        this.salesOrderItemDao.create(restockOrder);
+
                         let partialOrder = { ...item, Quantity: catalogueRecord.Quantity, SalesOrderItemStatus: 2 };
                         this.salesOrderItemDao.update(partialOrder);
-                        let restockOrder = { ...item, Quantity: item.Quantity - catalogueRecord.Quantity };
-                        this.salesOrderItemDao.create(restockOrder);
-                        restockOrder.SalesOrderItemStatus = 3;
-                        this.salesOrderItemDao.update(restockOrder);
+
                         itemsInStock.push(partialOrder);
                         itemsToRestock.push(restockOrder);
                     } else {
