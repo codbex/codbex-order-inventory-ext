@@ -26,7 +26,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
         const itemsForIssue = $scope.SalesOrderItemsData;
 
         if (itemsForIssue.length > 0) {
-            const goodsIssueUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueService.ts/";
+            const goodsIssueUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueService.ts/";
 
             $http.post(goodsIssueUrl, $scope.SalesOrderData)
                 .then(function (response) {
@@ -44,7 +44,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                                 "VAT": orderItem.VAT,
                                 "Gross": orderItem.Gross
                             };
-                            const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/api/GoodsIssues/GoodsIssueItemService.ts/";
+                            const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueItemService.ts/";
                             $http.post(goodsIssueItemUrl, goodsIssueItem);
                         });
                     }
