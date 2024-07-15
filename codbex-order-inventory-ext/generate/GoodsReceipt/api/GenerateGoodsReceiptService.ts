@@ -1,5 +1,5 @@
-import { PurchaseOrderRepository as PurchaseOrderDao } from "../../../../codbex-orders/gen/codbex-orders/dao/purchaseorder/PurchaseOrderRepository";
-import { PurchaseOrderItemRepository as PurchaseOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/purchaseorder/PurchaseOrderItemRepository";
+import { PurchaseOrderRepository as PurchaseOrderDao } from "../../../../codbex-orders/gen/codbex-orders/dao/PurchaseOrder/PurchaseOrderRepository";
+import { PurchaseOrderItemRepository as PurchaseOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/PurchaseOrder/PurchaseOrderItemRepository";
 
 import { Controller, Get } from "sdk/http";
 
