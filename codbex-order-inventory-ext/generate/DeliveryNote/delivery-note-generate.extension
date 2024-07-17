@@ -1,0 +1,5 @@
+{
+    "extensionPoint": "codbex-orders-custom-action",
+    "module": "codbex-order-inventory-ext/generate/DeliveryNote/delivery-note-generate.js",
+    "description": "Generate Delivery Note From Sales Order Custom Action"
+}
