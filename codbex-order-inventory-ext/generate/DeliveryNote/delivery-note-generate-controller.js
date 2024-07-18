@@ -28,14 +28,14 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
         const deliveryNoteUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteService.ts/";
 
         const deliveryNoteData = {
-            "Date": new Date(), // Current date
+            "Date": new Date(),
             "Store": $scope.SalesOrderData.Store,
             "Employee": $scope.SalesOrderData.Operator,
             "Customer": $scope.SalesOrderData.Customer,
             "Number": $scope.SalesOrderData.Reference
         };
 
-        console.log("DeliveryNoteData:", deliveryNoteData); // Log the payload
+        console.log("DeliveryNoteData:", deliveryNoteData);
 
         $http.post(deliveryNoteUrl, deliveryNoteData)
             .then(function (response) {
@@ -55,8 +55,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                     const deliveryNoteItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteItemService.ts/";
                     $http.post(deliveryNoteItemUrl, deliveryNoteItem);
 
-                    // Update SalesOrderItem status to Delivered
-                    orderItem.SalesOrderItemStatus = 4; // Assuming 4 represents Delivered
+                    orderItem.SalesOrderItemStatus = 4;
                     const updateSalesOrderItemUrl = "/services/ts/codbex-orders/gen/codbex-orders/api/SalesOrder/SalesOrderItemService.ts/" + orderItem.Id;
                     $http.put(updateSalesOrderItemUrl, orderItem);
                 });
@@ -65,7 +64,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                 $scope.closeDialog();
             })
             .catch(function (error) {
-                console.error("Error creating DeliveryNote:", error.response.data.message); // Log specific error message
+                console.error("Error creating DeliveryNote:", error.response.data.message);
                 $scope.closeDialog();
             });
     };
