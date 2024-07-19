@@ -15,15 +15,14 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
-            $scope.SalesOrderItemsData = response.data.ItemsToDeliver;
-            $scope.ItemsToRestock = response.data.ItemsToRestock;
+            $scope.ItemsToDeliver = response.data
         })
         .catch(function (error) {
             console.error("Error retrieving sales order items data:", error);
         });
 
     $scope.generateDeliveryNote = function () {
-        const itemsToDeliver = $scope.SalesOrderItemsData;
+        const itemsToDeliver = $scope.ItemsToDeliver;
 
         const deliveryNoteUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteService.ts/";
 
@@ -32,7 +31,8 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             "Store": $scope.SalesOrderData.Store,
             "Employee": $scope.SalesOrderData.Operator,
             "Customer": $scope.SalesOrderData.Customer,
-            "Number": $scope.SalesOrderData.Reference
+            "Number": $scope.SalesOrderData.Name,
+            "Company": $scope.SalesOrderData.Company
         };
 
         console.log("DeliveryNoteData:", deliveryNoteData);
@@ -41,17 +41,16 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             .then(function (response) {
                 $scope.DeliveryNote = response.data;
 
+                console.log("itemsToDeliver:", itemsToDeliver);
+
                 itemsToDeliver.forEach(orderItem => {
                     const deliveryNoteItem = {
-                        "DeliveryNote": $scope.DeliveryNote.DELIVERYNOTE_ID,
-                        "Product": orderItem.Product,
                         "Quantity": orderItem.Quantity,
                         "UoM": orderItem.UoM,
-                        "Price": orderItem.Price,
-                        "Net": orderItem.Net,
-                        "VAT": orderItem.VAT,
-                        "Gross": orderItem.Gross
+                        "Product": orderItem.Product,
+                        "DeliveryNote": $scope.DeliveryNote.Id
                     };
+
                     const deliveryNoteItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteItemService.ts/";
                     $http.post(deliveryNoteItemUrl, deliveryNoteItem);
 
