@@ -15,7 +15,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
-            $scope.ItemsToDeliver = response.data
+            $scope.ItemsToDeliver = response.data.ItemsToDeliver
         })
         .catch(function (error) {
             console.error("Error retrieving sales order items data:", error);

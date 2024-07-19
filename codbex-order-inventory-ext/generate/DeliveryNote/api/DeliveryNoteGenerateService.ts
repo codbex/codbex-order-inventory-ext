@@ -64,10 +64,12 @@ class DeliveryNoteGenerateService {
 
         salesOrderItems.forEach(item => {
             if (item.SalesOrderItemStatus != 4) {
-                itemsToRestock.push(item);
+                itemsToDeliver.push(item);
             }
         })
 
-        return itemsToDeliver;
+        return {
+            ItemsToDeliver: itemsToDeliver
+        }
     }
 }
