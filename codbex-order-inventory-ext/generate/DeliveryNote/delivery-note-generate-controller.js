@@ -15,7 +15,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
-            $scope.ItemsToDeliver = response.data.ItemsToDeliver
+            $scope.ItemsToDeliver = response.data.ItemsToDeliver;
         })
         .catch(function (error) {
             console.error("Error retrieving sales order items data:", error);
@@ -31,19 +31,14 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             "Store": $scope.SalesOrderData.Store,
             "Employee": $scope.SalesOrderData.Operator,
             "Customer": $scope.SalesOrderData.Customer,
-            "Number": $scope.SalesOrderData.Name,
             "Company": $scope.SalesOrderData.Company
         };
-
-        console.log("DeliveryNoteData:", deliveryNoteData);
 
         $http.post(deliveryNoteUrl, deliveryNoteData)
             .then(function (response) {
                 $scope.DeliveryNote = response.data;
 
-                console.log("itemsToDeliver:", itemsToDeliver);
-
-                itemsToDeliver.forEach(orderItem => {
+                const requests = itemsToDeliver.map(orderItem => {
                     const deliveryNoteItem = {
                         "Quantity": orderItem.Quantity,
                         "UoM": orderItem.UoM,
@@ -52,15 +47,23 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                     };
 
                     const deliveryNoteItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteItemService.ts/";
-                    $http.post(deliveryNoteItemUrl, deliveryNoteItem);
+                    const createDeliveryNoteItem = $http.post(deliveryNoteItemUrl, deliveryNoteItem);
 
                     orderItem.SalesOrderItemStatus = 4;
                     const updateSalesOrderItemUrl = "/services/ts/codbex-orders/gen/codbex-orders/api/SalesOrder/SalesOrderItemService.ts/" + orderItem.Id;
-                    $http.put(updateSalesOrderItemUrl, orderItem);
+                    const updateSalesOrderItem = $http.put(updateSalesOrderItemUrl, orderItem);
+
+                    return Promise.all([createDeliveryNoteItem, updateSalesOrderItem]);
                 });
 
-                console.log("DeliveryNote created successfully:", response.data);
-                $scope.closeDialog();
+                Promise.all(requests)
+                    .then(results => {
+                        $scope.closeDialog();
+                    })
+                    .catch(error => {
+                        console.error("Error creating delivery note items:", error);
+                        $scope.closeDialog();
+                    });
             })
             .catch(function (error) {
                 console.error("Error creating DeliveryNote:", error.response.data.message);
