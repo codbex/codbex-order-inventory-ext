@@ -24,6 +24,12 @@
                 <div class="main-text">
                     <p>Are you sure you want to generate the Goods Issue?</p>
                 </div>
+                <div ng-if="SalesOrderItemsData.length > 0">
+                    <div ng-repeat="item in SalesOrderItemsData">
+                        <input type="checkbox" ng-model="item.selected" /> {{item.Product}} - {{item.Quantity}}
+                        {{item.UoM}}
+                    </div>
+                </div>
                 <div class="dialog-buttons">
                     <button ng-click="generateGoodsIssue()" class="button">Yes</button>
                     <button ng-click="closeDialog()" class="button">No</button>

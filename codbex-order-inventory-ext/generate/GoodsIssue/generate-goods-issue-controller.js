@@ -15,15 +15,14 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
-            $scope.SalesOrderItemsData = response.data.ItemsForIssue;
-            $scope.ItemsToRestock = response.data.ItemsToRestock;
+            $scope.SalesOrderItemsData = response.data.ItemsToRestock;
         })
         .catch(function (error) {
             console.error("Error retrieving sales order items data:", error);
         });
 
     $scope.generateGoodsIssue = function () {
-        const itemsForIssue = $scope.SalesOrderItemsData;
+        const itemsForIssue = $scope.SalesOrderItemsData.filter(item => item.selected);
 
         if (itemsForIssue.length > 0) {
             const goodsIssueUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueService.ts/";
@@ -32,22 +31,21 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                 .then(function (response) {
                     $scope.GoodsIssue = response.data;
 
-                    if ($scope.SalesOrderItemsData && $scope.SalesOrderItemsData.length > 0) {
-                        itemsForIssue.forEach(orderItem => {
-                            const goodsIssueItem = {
-                                "GoodsIssue": $scope.GoodsIssue.Id,
-                                "Product": orderItem.Product,
-                                "Quantity": orderItem.Quantity,
-                                "UoM": orderItem.UoM,
-                                "Price": orderItem.Price,
-                                "Net": orderItem.Net,
-                                "VAT": orderItem.VAT,
-                                "Gross": orderItem.Gross
-                            };
-                            const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueItemService.ts/";
-                            $http.post(goodsIssueItemUrl, goodsIssueItem);
-                        });
-                    }
+                    itemsForIssue.forEach(orderItem => {
+                        const goodsIssueItem = {
+                            "GoodsIssue": $scope.GoodsIssue.Id,
+                            "Product": orderItem.Product,
+                            "Quantity": orderItem.Quantity,
+                            "UoM": orderItem.UoM,
+                            "Price": orderItem.Price,
+                            "Net": orderItem.Net,
+                            "VAT": orderItem.VAT,
+                            "Gross": orderItem.Gross
+                        };
+                        const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueItemService.ts/";
+                        $http.post(goodsIssueItemUrl, goodsIssueItem);
+                    });
+
                     console.log("GoodsIssue created successfully:", response.data);
                     $scope.closeDialog();
                 })
@@ -56,7 +54,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                     $scope.closeDialog();
                 });
         } else {
-            console.log("No items to issue. GoodsIssue not created.");
+            console.log("No items selected. GoodsIssue not created.");
             $scope.closeDialog();
         }
     };
