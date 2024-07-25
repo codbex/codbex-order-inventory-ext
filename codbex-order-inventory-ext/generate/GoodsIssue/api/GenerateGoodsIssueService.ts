@@ -1,6 +1,7 @@
 import { SalesOrderRepository as SalesOrderDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderRepository";
 import { SalesOrderItemRepository as SalesOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderItemRepository";
-import { CatalogueRepository as catalogueRepositoryDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
+import { CatalogueRepository as CatalogueRepositoryDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
+import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
 
 import { Controller, Get } from "sdk/http";
 
@@ -10,11 +11,13 @@ class GenerateGoodsIssueService {
     private readonly salesOrderDao;
     private readonly salesOrderItemDao;
     private readonly catalogueRepositoryDao;
+    private readonly productDao;
 
     constructor() {
         this.salesOrderDao = new SalesOrderDao();
         this.salesOrderItemDao = new SalesOrderItemDao();
-        this.catalogueRepositoryDao = new catalogueRepositoryDao();
+        this.catalogueRepositoryDao = new CatalogueRepositoryDao();
+        this.productDao = new ProductDao();
     }
 
     @Get("/salesOrderData/:salesOrderId")
@@ -100,9 +103,21 @@ class GenerateGoodsIssueService {
             }
         }
 
+        // Fetch product names
+        itemsInStock = this.addProductNames(itemsInStock);
+        itemsToRestock = this.addProductNames(itemsToRestock);
+
         return {
             "ItemsForIssue": itemsInStock,
             "ItemsToRestock": itemsToRestock
         };
+    }
+
+    private addProductNames(items: any[]) {
+        for (let item of items) {
+            const product = this.productDao.findById(item.Product);
+            item.ProductName = product.Name;
+        }
+        return items;
     }
 }

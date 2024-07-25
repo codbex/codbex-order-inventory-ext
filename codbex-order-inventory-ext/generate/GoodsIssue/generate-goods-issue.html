@@ -22,17 +22,15 @@
                 <div class="title">Generate Goods Issue</div>
                 <div class="line"></div>
                 <div class="main-text">
-                    <p>Are you sure you want to generate the Goods Issue?</p>
-                </div>
-                <div ng-if="SalesOrderItemsData.length > 0">
+                    <p>Are you sure you want to generate the Goods Issue for Sales Order?</p>
                     <div ng-repeat="item in SalesOrderItemsData">
-                        <input type="checkbox" ng-model="item.selected" /> {{item.Product}} - {{item.Quantity}}
-                        {{item.UoM}}
+                        <input type="checkbox" ng-model="item.selected" /> {{item.ProductName}} ({{item.Quantity}})
                     </div>
                 </div>
-                <div class="dialog-buttons">
-                    <button ng-click="generateGoodsIssue()" class="button">Yes</button>
-                    <button ng-click="closeDialog()" class="button">No</button>
+                <div class="line"></div>
+                <div class="footer">
+                    <button class="action-button" ng-click="generateGoodsIssue()">Generate</button>
+                    <button class="link-button" ng-click="closeDialog()">Cancel</button>
                 </div>
             </div>
         </div>

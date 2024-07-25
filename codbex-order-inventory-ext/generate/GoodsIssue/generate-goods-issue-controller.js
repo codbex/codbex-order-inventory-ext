@@ -35,6 +35,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                         const goodsIssueItem = {
                             "GoodsIssue": $scope.GoodsIssue.Id,
                             "Product": orderItem.Product,
+                            "ProductName": orderItem.ProductName,
                             "Quantity": orderItem.Quantity,
                             "UoM": orderItem.UoM,
                             "Price": orderItem.Price,
