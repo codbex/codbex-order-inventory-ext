@@ -31,7 +31,9 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                 .then(function (response) {
                     $scope.GoodsIssue = response.data;
 
-                    itemsForIssue.forEach(orderItem => {
+                    const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueItemService.ts/";
+
+                    const postPromises = itemsForIssue.map(orderItem => {
                         const goodsIssueItem = {
                             "GoodsIssue": $scope.GoodsIssue.Id,
                             "Product": orderItem.Product,
@@ -43,12 +45,18 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                             "VAT": orderItem.VAT,
                             "Gross": orderItem.Gross
                         };
-                        const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueItemService.ts/";
-                        $http.post(goodsIssueItemUrl, goodsIssueItem);
+                        return $http.post(goodsIssueItemUrl, goodsIssueItem);
                     });
 
-                    console.log("GoodsIssue created successfully:", response.data);
-                    $scope.closeDialog();
+                    Promise.all(postPromises)
+                        .then(function (responses) {
+                            console.log("All GoodsIssue items created successfully:", responses);
+                            $scope.closeDialog();
+                        })
+                        .catch(function (error) {
+                            console.error("Error creating GoodsIssue items:", error);
+                            $scope.closeDialog();
+                        });
                 })
                 .catch(function (error) {
                     console.error("Error creating GoodsIssue:", error);
