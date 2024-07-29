@@ -15,7 +15,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     $http.get(salesOrderItemsUrl)
         .then(function (response) {
-            $scope.SalesOrderItemsData = response.data.ItemsToRestock;
+            $scope.SalesOrderItemsData = response.data.ItemsToRestock.filter(item => item.Availability >= item.Quantity);
         })
         .catch(function (error) {
             console.error("Error retrieving sales order items data:", error);
