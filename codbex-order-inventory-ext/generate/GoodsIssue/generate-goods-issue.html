@@ -22,15 +22,30 @@
                 <div class="title">Generate Goods Issue</div>
                 <div class="line"></div>
                 <div class="main-text">
-                    <p>Are you sure you want to generate the Goods Issue for Sales Order?</p>
-                    <div ng-repeat="item in SalesOrderItemsData">
-                        <input type="checkbox" ng-model="item.selected" /> {{item.ProductName}} ({{item.Quantity}})
+                    <p>Select items to generate the Goods Issue for Sales Order:</p>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Select</th>
+                                    <th>Product Name</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="item in SalesOrderItemsData">
+                                    <td><input type="checkbox" ng-model="item.selected" /></td>
+                                    <td>{{item.ProductName}}</td>
+                                    <td>{{item.Quantity}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="line"></div>
-                <div class="footer">
-                    <button class="action-button" ng-click="generateGoodsIssue()">Generate</button>
-                    <button class="link-button" ng-click="closeDialog()">Cancel</button>
+                <div class="dialog-buttons">
+                    <button class="button" ng-click="generateGoodsIssue()">Generate</button>
+                    <button class="button red-button" ng-click="closeDialog()">Cancel</button>
                 </div>
             </div>
         </div>

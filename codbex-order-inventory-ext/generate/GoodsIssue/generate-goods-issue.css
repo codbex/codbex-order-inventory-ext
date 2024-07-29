@@ -11,7 +11,7 @@
 
 .dialog-content {
     background-color: white;
-    width: 400px;
+    width: 500px;
     padding: 20px;
     border-radius: 5px;
     position: absolute;
@@ -35,6 +35,30 @@
     margin-top: 10px;
     margin-bottom: 20px;
     color: #666;
+}
+
+.table-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+table,
+th,
+td {
+    border: 1px solid #ccc;
+}
+
+th,
+td {
+    padding: 8px;
+    text-align: left;
 }
 
 .dialog-buttons {
