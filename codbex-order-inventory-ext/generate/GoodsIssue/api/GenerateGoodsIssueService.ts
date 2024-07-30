@@ -62,62 +62,16 @@ class GenerateGoodsIssueService {
             }
         });
 
-        let itemsInStock = [];
-        let itemsToRestock = [];
+        let itemsForIssue = [];
 
-        for (let item of salesOrderItems) {
-            if (item.SalesOrderItemStatus != 2) {
-                const catalogueRecords = this.catalogueRepositoryDao.findAll({
-                    $filter: {
-                        equals: {
-                            Store: salesOrder.Store,
-                            Product: item.Product,
-                        },
-                    },
-                });
-                if (catalogueRecords.length > 0) {
-                    const catalogueRecord = catalogueRecords[0];
-                    if (catalogueRecord.Quantity >= item.Quantity) {
-                        item.SalesOrderItemStatus = 2;
-                        this.salesOrderItemDao.update(item);
-                        itemsInStock.push(item);
-                    } else if (catalogueRecord.Quantity > 0) {
-                        let restockOrder = { ...item, Quantity: item.Quantity - catalogueRecord.Quantity, SalesOrderItemStatus: 3 };
-                        this.salesOrderItemDao.create(restockOrder);
-
-                        let partialOrder = { ...item, Quantity: catalogueRecord.Quantity, SalesOrderItemStatus: 2 };
-                        this.salesOrderItemDao.update(partialOrder);
-
-                        itemsInStock.push(partialOrder);
-                        itemsToRestock.push(restockOrder);
-                    } else {
-                        item.SalesOrderItemStatus = 3;
-                        this.salesOrderItemDao.update(item);
-                        itemsToRestock.push(item);
-                    }
-                } else {
-                    item.SalesOrderItemStatus = 3;
-                    this.salesOrderItemDao.update(item);
-                    itemsToRestock.push(item);
-                }
+        salesOrderItems.forEach(item => {
+            if (item.SalesOrderItemStatus != 4) {
+                itemsForIssue.push(item);
             }
-        }
-
-        // Fetch product names
-        itemsInStock = this.addProductNames(itemsInStock);
-        itemsToRestock = this.addProductNames(itemsToRestock);
+        })
 
         return {
-            "ItemsForIssue": itemsInStock,
-            "ItemsToRestock": itemsToRestock
-        };
-    }
-
-    private addProductNames(items: any[]) {
-        for (let item of items) {
-            const product = this.productDao.findById(item.Product);
-            item.ProductName = product.Name;
+            ItemsToDeliver: itemsForIssue
         }
-        return items;
     }
 }
