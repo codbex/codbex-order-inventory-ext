@@ -8,6 +8,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + params.id;
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
     const catalogueUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/catalogueData";
+    const productUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/productData";
 
     $http.get(salesOrderDataUrl)
         .then(function (response) {
@@ -24,25 +25,28 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             $scope.CatalogueData = response.data.CatalogueRecords.filter(record => {
                 return record.Store === $scope.SalesOrderData.Store;
             });
+
+            return $http.get(productUrl);
+        })
+        .then(function (response) {
+            $scope.Products = response.data.Products;
+
+            $scope.ProductsForTable = $scope.SalesOrderItemsData.map(item => {
+                const product = $scope.Products.find(product => product.id == item.Product);
+                const catalogueRecord = $scope.CatalogueData.find(record => record.Product == item.Product);
+
+                return {
+                    ...item,
+                    ProductName: product ? product.name : 'Unknown',
+                    Availability: catalogueRecord ? catalogueRecord.Availability : 'Unavailable'
+                };
+            });
+
+            console.log("$scope.ProductsForTable:", $scope.ProductsForTable);
         })
         .catch(function (error) {
             console.error("Error retrieving data:", error);
         });
-
-    $scope.findSalesOrderItemAvailability = function (salesOrderItem) {
-        if (!$scope.CatalogueData || $scope.CatalogueData.length === 0) {
-            return 'N/A';  // Or handle appropriately
-        }
-
-        console.log('SalesOrderItem:', salesOrderItem);
-        console.log('$scope.CatalogueData', $scope.CatalogueData);
-
-        // Assuming 'Product' is the field to compare
-        const matchingRecord = $scope.CatalogueData.find(record => record.Product == salesOrderItem.Product);
-        console.log('MatchingRecord:', matchingRecord);
-
-        return matchingRecord ? matchingRecord.Quantity : 'Not Available';
-    };
 
     $scope.generateGoodsIssue = function () {
         const itemsForIssue = $scope.SalesOrderItemsData.filter(item => item.selected);

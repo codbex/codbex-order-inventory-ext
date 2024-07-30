@@ -34,11 +34,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="item in SalesOrderItemsData">
+                                <tr ng-repeat="item in ProductsForTable">
                                     <td><input type="checkbox" ng-model="item.selected" /></td>
                                     <td>{{item.ProductName}}</td>
                                     <td>{{item.Quantity}}</td>
-                                    <td>{{findSalesOrderItemAvailability(item)}}</td>
+                                    <td>{{item.Availability}}</td>
                                 </tr>
                             </tbody>
                         </table>

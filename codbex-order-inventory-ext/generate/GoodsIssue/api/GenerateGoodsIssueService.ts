@@ -93,7 +93,7 @@ class GenerateGoodsIssueService {
 
             if (!catalogueRecords || catalogueRecords.length === 0) {
                 return {
-                    error: "No catalogue records found"
+                    error: "No catalogue records found!"
                 };
             }
 
@@ -102,10 +102,29 @@ class GenerateGoodsIssueService {
             };
         } catch (error) {
             ctx.res.sendStatus(400);
-            return "An error occurred while fetching catalogue records";
+            return "An error occurred while fetching catalogue records!";
 
         }
     }
 
+    @Get("/productData")
+    public productsData(_: any, ctx: any) {
+        try {
+            let products = this.productDao.findAll();
 
+            if (!products || products.length === 0) {
+                return {
+                    error: "No products found!"
+                };
+            }
+
+            return {
+                Products: products
+            };
+        } catch (error) {
+            ctx.res.sendStatus(400);
+            return "An error occurred while fetching products!";
+
+        }
+    }
 }
