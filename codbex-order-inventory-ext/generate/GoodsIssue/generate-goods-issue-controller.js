@@ -4,21 +4,32 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $scope.showDialog = true;
 
     const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + params.id;
+    const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
+    const catalogueUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/catalogueData";
+
+    // First, retrieve the sales order data
     $http.get(salesOrderDataUrl)
         .then(function (response) {
             $scope.SalesOrderData = response.data;
-        })
-        .catch(function (error) {
-            console.error("Error retrieving sales order data:", error);
-        });
 
-    const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
-    $http.get(salesOrderItemsUrl)
+            // After retrieving sales order data, retrieve sales order items data
+            return $http.get(salesOrderItemsUrl);
+        })
         .then(function (response) {
-            $scope.SalesOrderItemsData = response.data.ItemsToRestock.filter(item => item.Availability >= item.Quantity);
+            $scope.SalesOrderItemsData = response.data.ItemsForIssue;
+
+            // After retrieving sales order items data, retrieve catalogue data
+            return $http.get(catalogueUrl);
+        })
+        .then(function (response) {
+            $scope.CatalogueData = response.data.CatalogueRecords.filter(record => {
+                return record.Store == $scope.SalesOrderData.Store;
+            });
+
+            console.log("Catalogue record:", $scope.CatalogueData);
         })
         .catch(function (error) {
-            console.error("Error retrieving sales order items data:", error);
+            console.error("Error retrieving data:", error);
         });
 
     $scope.generateGoodsIssue = function () {

@@ -52,6 +52,14 @@ class DeliveryNoteGenerateService {
 
         let salesOrder = this.salesOrderDao.findById(salesOrderId);
 
+        if (!salesOrder) {
+            ctx.status = 404;
+            ctx.body = {
+                error: "Sales order not found"
+            };
+            return;
+        }
+
         let salesOrderItems = this.salesOrderItemDao.findAll({
             $filter: {
                 equals: {

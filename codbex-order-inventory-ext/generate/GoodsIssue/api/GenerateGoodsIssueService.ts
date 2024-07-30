@@ -1,7 +1,8 @@
 import { SalesOrderRepository as SalesOrderDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderRepository";
 import { SalesOrderItemRepository as SalesOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderItemRepository";
-import { CatalogueRepository as CatalogueRepositoryDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
+import { CatalogueRepository as CatalogueDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
 import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
+import { StoreRepository as StoreDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/Stores/StoreRepository";
 
 import { Controller, Get } from "sdk/http";
 
@@ -10,14 +11,16 @@ class GenerateGoodsIssueService {
 
     private readonly salesOrderDao;
     private readonly salesOrderItemDao;
-    private readonly catalogueRepositoryDao;
+    private readonly catalogueDao;
     private readonly productDao;
+    private readonly storeDao;
 
     constructor() {
         this.salesOrderDao = new SalesOrderDao();
         this.salesOrderItemDao = new SalesOrderItemDao();
-        this.catalogueRepositoryDao = new CatalogueRepositoryDao();
+        this.catalogueDao = new CatalogueDao();
         this.productDao = new ProductDao();
+        this.storeDao = new StoreDao();
     }
 
     @Get("/salesOrderData/:salesOrderId")
@@ -54,6 +57,14 @@ class GenerateGoodsIssueService {
 
         let salesOrder = this.salesOrderDao.findById(salesOrderId);
 
+        if (!salesOrder) {
+            ctx.status = 404;
+            ctx.body = {
+                error: "Sales order not found"
+            };
+            return;
+        }
+
         let salesOrderItems = this.salesOrderItemDao.findAll({
             $filter: {
                 equals: {
@@ -71,7 +82,30 @@ class GenerateGoodsIssueService {
         })
 
         return {
-            ItemsToDeliver: itemsForIssue
+            ItemsForIssue: itemsForIssue
         }
     }
+
+    @Get("/catalogueData")
+    public catalogueRecordsData(_: any, ctx: any) {
+        try {
+            let catalogueRecords = this.catalogueDao.findAll();
+
+            if (!catalogueRecords || catalogueRecords.length === 0) {
+                return {
+                    error: "No catalogue records found"
+                };
+            }
+
+            return {
+                CatalogueRecords: catalogueRecords
+            };
+        } catch (error) {
+            ctx.res.sendStatus(400);
+            return "An error occurred while fetching catalogue records";
+
+        }
+    }
+
+
 }
