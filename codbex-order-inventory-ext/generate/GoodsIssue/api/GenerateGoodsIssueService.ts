@@ -5,7 +5,7 @@ import { ProductRepository as ProductDao } from "../../../../codbex-products/gen
 import { GoodsIssueRepository as GoodsIssueDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/GoodsIssues/GoodsIssueRepository";
 import { GoodsIssueItemRepository as GoodsIssueItemDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/GoodsIssues/GoodsIssueItemRepository";
 
-import { Controller, Get, Post, Put, Body, Path } from "sdk/http";
+import { Controller, Get, Post, Put, Path, response } from "sdk/http";
 
 @Controller
 class GenerateGoodsIssueService {
@@ -61,7 +61,7 @@ class GenerateGoodsIssueService {
         let salesOrder = this.salesOrderDao.findById(salesOrderId);
 
         if (!salesOrder) {
-            ctx.status = 404;
+            response.setStatus(response.BAD_REQUEST);
             ctx.body = {
                 error: "Sales order not found"
             };
@@ -104,7 +104,7 @@ class GenerateGoodsIssueService {
                 CatalogueRecords: catalogueRecords
             };
         } catch (error) {
-            ctx.res.sendStatus(400);
+            response.setStatus(response.BAD_REQUEST);
             return "An error occurred while fetching catalogue records!";
         }
     }
@@ -124,51 +124,48 @@ class GenerateGoodsIssueService {
                 Products: products
             };
         } catch (error) {
-            ctx.res.sendStatus(400);
+            response.setStatus(response.BAD_REQUEST);
             return "An error occurred while fetching products!";
         }
     }
 
     @Post("/goodsIssue")
-    public createGoodsIssue(@Body() body: any, ctx: any) {
+    addGoodsIssue(body: any, ctx: any) {
         try {
-            const goodsIssue = this.goodsIssueDao.create(body);
-            return goodsIssue;
-        } catch (error) {
-            ctx.res.sendStatus(400);
-            return "An error occurred while creating Goods Issue!";
-        }
-    }
+            ["Date", "Number", "Store", "Company", "Currency", "Net", "VAT", "Gross"].forEach(elem => {
+                if (!body.hasOwnProperty(elem)) {
+                    response.setStatus(response.BAD_REQUEST);
+                    return;
+                }
+            })
 
-    @Post("/goodsIssueItem")
-    public createGoodsIssueItem(@Body() body: any, ctx: any) {
-        try {
-            const goodsIssueItem = this.goodsIssueItemDao.create(body);
-            return goodsIssueItem;
-        } catch (error) {
-            ctx.res.sendStatus(400);
-            return "An error occurred while creating Goods Issue Item!";
-        }
-    }
+            const newIssue = this.goodsIssueDao.create(body);
 
-    @Put("/salesOrderItem/:salesOrderItemId")
-    public updateSalesOrderItem(@Path() salesOrderItemId: string, @Body() body: any, ctx: any) {
-        try {
-            let salesOrderItem = this.salesOrderItemDao.findById(salesOrderItemId);
-            if (!salesOrderItem) {
-                ctx.status = 404;
-                ctx.body = {
-                    error: "Sales order item not found"
-                };
-                return;
+            if (!newIssue) {
+                throw new Error("Failed to create GoodsIssue");
             }
 
-            salesOrderItem = { ...salesOrderItem, ...body };
-            this.salesOrderItemDao.update(salesOrderItemId, salesOrderItem);
-            return salesOrderItem;
-        } catch (error) {
-            ctx.res.sendStatus(400);
-            return "An error occurred while updating Sales Order Item!";
+            response.setStatus(response.CREATED);
+        }
+
+        catch (e) {
+            response.setStatus(response.BAD_REQUEST);
+            return
         }
     }
+
+    //POST method that gets a list in the body of salesOrderItems and creates GoodsIssueItems of them
+    // const goodsIssueItem = {
+    //                         "GoodsIssue": $scope.GoodsIssue.Id,
+    //                         "Product": orderItem.Product,
+    //                         "ProductName": orderItem.ProductName,
+    //                         "Quantity": orderItem.Quantity,
+    //                         "UoM": orderItem.UoM,
+    //                         "Price": orderItem.Price,
+    //                         "Net": orderItem.Net,
+    //                         "VAT": orderItem.VAT,
+    //                         "Gross": orderItem.Gross
+    //                     };
+
+    //PUT method that gets a list of SalesOrderItems in the body and updates each item
 }

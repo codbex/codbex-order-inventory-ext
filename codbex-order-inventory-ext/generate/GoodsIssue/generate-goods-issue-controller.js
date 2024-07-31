@@ -51,41 +51,27 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
         console.log("itemsForIssue", itemsForIssue);
 
         if (itemsForIssue.length > 0) {
-            const goodsIssueUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/goodsIssue";
-            const goodsIssueData = {
-                Date: new Date(),
-                SalesOrder: $scope.SalesOrderData,
-                Items: itemsForIssue
-            };
+            const goodsIssueUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueService.ts/";
 
-            $http.post(goodsIssueUrl, goodsIssueData)
+            $http.post(goodsIssueUrl, $scope.SalesOrderData)
                 .then(function (response) {
                     $scope.GoodsIssue = response.data;
 
-                    const goodsIssueItemUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/goodsIssueItem";
-                    const salesOrderItemUpdateUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItem";
+                    const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueItemService.ts/";
 
                     const postPromises = itemsForIssue.map(orderItem => {
                         const goodsIssueItem = {
-                            GoodsIssue: $scope.GoodsIssue.Id,
-                            Product: orderItem.Product,
-                            ProductName: orderItem.ProductName,
-                            Quantity: orderItem.Quantity,
-                            UoM: orderItem.UoM,
-                            Price: orderItem.Price,
-                            Net: orderItem.Net,
-                            VAT: orderItem.VAT,
-                            Gross: orderItem.Gross
+                            "GoodsIssue": $scope.GoodsIssue.Id,
+                            "Product": orderItem.Product,
+                            "ProductName": orderItem.ProductName,
+                            "Quantity": orderItem.Quantity,
+                            "UoM": orderItem.UoM,
+                            "Price": orderItem.Price,
+                            "Net": orderItem.Net,
+                            "VAT": orderItem.VAT,
+                            "Gross": orderItem.Gross
                         };
-
-                        return $http.post(goodsIssueItemUrl, goodsIssueItem)
-                            .then(function () {
-                                const salesOrderItem = $scope.SalesOrderItemsData.find(item => item.Product === orderItem.Product);
-                                if (salesOrderItem) {
-                                    salesOrderItem.Status = 2; // Status corresponding to 'issued'
-                                    return $http.put(salesOrderItemUpdateUrl + "/" + salesOrderItem.Id, salesOrderItem);
-                                }
-                            });
+                        return $http.post(goodsIssueItemUrl, goodsIssueItem);
                     });
 
                     Promise.all(postPromises)
@@ -93,7 +79,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                             $scope.closeDialog();
                         })
                         .catch(function (error) {
-                            console.error("Error creating GoodsIssue items or updating sales order items:", error);
+                            console.error("Error creating GoodsIssue items:", error);
                             $scope.closeDialog();
                         });
                 })
