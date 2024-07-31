@@ -3,7 +3,6 @@ const app = angular.module('templateApp', ['ideUI', 'ideView']);
 app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'messageHub', function ($scope, $http, ViewParameters, messageHub) {
     const params = ViewParameters.get();
     $scope.showDialog = true;
-    $scope.CatalogueData = [];  // Initialize to an empty array to avoid undefined issues
 
     const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderData/" + params.id;
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItemsData/" + params.id;
@@ -41,47 +40,60 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                     Availability: catalogueRecord ? catalogueRecord.Quantity : 'Unavailable'
                 };
             });
-
-            console.log("$scope.ProductsForTable:", $scope.ProductsForTable);
         })
         .catch(function (error) {
             console.error("Error retrieving data:", error);
         });
 
     $scope.generateGoodsIssue = function () {
-        const itemsForIssue = $scope.SalesOrderItemsData.filter(item => item.selected);
+        const itemsForIssue = $scope.ProductsForTable.filter(item => item.selected);
+
+        console.log("itemsForIssue", itemsForIssue);
 
         if (itemsForIssue.length > 0) {
-            const goodsIssueUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueService.ts/";
+            const goodsIssueUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/goodsIssue";
+            const goodsIssueData = {
+                Date: new Date(),
+                SalesOrder: $scope.SalesOrderData,
+                Items: itemsForIssue
+            };
 
-            $http.post(goodsIssueUrl, $scope.SalesOrderData)
+            $http.post(goodsIssueUrl, goodsIssueData)
                 .then(function (response) {
                     $scope.GoodsIssue = response.data;
 
-                    const goodsIssueItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/GoodsIssues/GoodsIssueItemService.ts/";
+                    const goodsIssueItemUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/goodsIssueItem";
+                    const salesOrderItemUpdateUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItem";
 
                     const postPromises = itemsForIssue.map(orderItem => {
                         const goodsIssueItem = {
-                            "GoodsIssue": $scope.GoodsIssue.Id,
-                            "Product": orderItem.Product,
-                            "ProductName": orderItem.ProductName,
-                            "Quantity": orderItem.Quantity,
-                            "UoM": orderItem.UoM,
-                            "Price": orderItem.Price,
-                            "Net": orderItem.Net,
-                            "VAT": orderItem.VAT,
-                            "Gross": orderItem.Gross
+                            GoodsIssue: $scope.GoodsIssue.Id,
+                            Product: orderItem.Product,
+                            ProductName: orderItem.ProductName,
+                            Quantity: orderItem.Quantity,
+                            UoM: orderItem.UoM,
+                            Price: orderItem.Price,
+                            Net: orderItem.Net,
+                            VAT: orderItem.VAT,
+                            Gross: orderItem.Gross
                         };
-                        return $http.post(goodsIssueItemUrl, goodsIssueItem);
+
+                        return $http.post(goodsIssueItemUrl, goodsIssueItem)
+                            .then(function () {
+                                const salesOrderItem = $scope.SalesOrderItemsData.find(item => item.Product === orderItem.Product);
+                                if (salesOrderItem) {
+                                    salesOrderItem.Status = 2; // Status corresponding to 'issued'
+                                    return $http.put(salesOrderItemUpdateUrl + "/" + salesOrderItem.Id, salesOrderItem);
+                                }
+                            });
                     });
 
                     Promise.all(postPromises)
                         .then(function (responses) {
-                            console.log("All GoodsIssue items created successfully:", responses);
                             $scope.closeDialog();
                         })
                         .catch(function (error) {
-                            console.error("Error creating GoodsIssue items:", error);
+                            console.error("Error creating GoodsIssue items or updating sales order items:", error);
                             $scope.closeDialog();
                         });
                 })

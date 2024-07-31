@@ -2,9 +2,10 @@ import { SalesOrderRepository as SalesOrderDao } from "../../../../codbex-orders
 import { SalesOrderItemRepository as SalesOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderItemRepository";
 import { CatalogueRepository as CatalogueDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
 import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
-import { StoreRepository as StoreDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/Stores/StoreRepository";
+import { GoodsIssueRepository as GoodsIssueDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/GoodsIssues/GoodsIssueRepository";
+import { GoodsIssueItemRepository as GoodsIssueItemDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/GoodsIssues/GoodsIssueItemRepository";
 
-import { Controller, Get } from "sdk/http";
+import { Controller, Get, Post, Put, Body, Path } from "sdk/http";
 
 @Controller
 class GenerateGoodsIssueService {
@@ -13,14 +14,16 @@ class GenerateGoodsIssueService {
     private readonly salesOrderItemDao;
     private readonly catalogueDao;
     private readonly productDao;
-    private readonly storeDao;
+    private readonly goodsIssueDao;
+    private readonly goodsIssueItemDao;
 
     constructor() {
         this.salesOrderDao = new SalesOrderDao();
         this.salesOrderItemDao = new SalesOrderItemDao();
         this.catalogueDao = new CatalogueDao();
         this.productDao = new ProductDao();
-        this.storeDao = new StoreDao();
+        this.goodsIssueDao = new GoodsIssueDao();
+        this.goodsIssueItemDao = new GoodsIssueItemDao();
     }
 
     @Get("/salesOrderData/:salesOrderId")
@@ -103,7 +106,6 @@ class GenerateGoodsIssueService {
         } catch (error) {
             ctx.res.sendStatus(400);
             return "An error occurred while fetching catalogue records!";
-
         }
     }
 
@@ -124,7 +126,49 @@ class GenerateGoodsIssueService {
         } catch (error) {
             ctx.res.sendStatus(400);
             return "An error occurred while fetching products!";
+        }
+    }
 
+    @Post("/goodsIssue")
+    public createGoodsIssue(@Body() body: any, ctx: any) {
+        try {
+            const goodsIssue = this.goodsIssueDao.create(body);
+            return goodsIssue;
+        } catch (error) {
+            ctx.res.sendStatus(400);
+            return "An error occurred while creating Goods Issue!";
+        }
+    }
+
+    @Post("/goodsIssueItem")
+    public createGoodsIssueItem(@Body() body: any, ctx: any) {
+        try {
+            const goodsIssueItem = this.goodsIssueItemDao.create(body);
+            return goodsIssueItem;
+        } catch (error) {
+            ctx.res.sendStatus(400);
+            return "An error occurred while creating Goods Issue Item!";
+        }
+    }
+
+    @Put("/salesOrderItem/:salesOrderItemId")
+    public updateSalesOrderItem(@Path() salesOrderItemId: string, @Body() body: any, ctx: any) {
+        try {
+            let salesOrderItem = this.salesOrderItemDao.findById(salesOrderItemId);
+            if (!salesOrderItem) {
+                ctx.status = 404;
+                ctx.body = {
+                    error: "Sales order item not found"
+                };
+                return;
+            }
+
+            salesOrderItem = { ...salesOrderItem, ...body };
+            this.salesOrderItemDao.update(salesOrderItemId, salesOrderItem);
+            return salesOrderItem;
+        } catch (error) {
+            ctx.res.sendStatus(400);
+            return "An error occurred while updating Sales Order Item!";
         }
     }
 }
