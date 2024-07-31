@@ -166,6 +166,52 @@ class GenerateGoodsIssueService {
     //                         "VAT": orderItem.VAT,
     //                         "Gross": orderItem.Gross
     //                     };
+    @Post("/goodsIssueItems")
+    async addGoodsIssueItems(body: any[], response: any) {
+        try {
+            const requiredFields = ["GoodsIssue", "Product", "ProductName", "Quantity", "UoM", "Price", "Net", "VAT", "Gross"];
+
+            for (const item of body) {
+                for (const field of requiredFields) {
+                    if (!item.hasOwnProperty(field)) {
+                        response.setStatus(response.BAD_REQUEST);
+                        response.send({ error: `Missing field: ${field}` });
+                        return;
+                    }
+                }
+
+                const updatedItem = await this.goodsIssueItemDao.create(item);
+
+                if (!updatedItem) {
+                    throw new Error("Failed to update GoodsIssueItem");
+                }
+            }
+
+            response.setStatus(response.CREATED);
+            response.send({ message: "All items updated successfully" });
+        } catch (e) {
+            response.setStatus(response.BAD_REQUEST);
+            return
+        }
+    }
+
+
 
     //PUT method that gets a list of SalesOrderItems in the body and updates each item
+
+    @Put("/salesOrderItems")
+    async updateSalesOrderItems(body: any[], response: any) {
+        try {
+            for (const item of body) {
+                await this.salesOrderItemDao.update(item);
+            }
+
+            response.setStatus(response.OK);
+            response.send({ message: "All items updated successfully" });
+        } catch (e) {
+            response.setStatus(response.BAD_REQUEST);
+            return
+        }
+    }
+
 }
