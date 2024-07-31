@@ -32,13 +32,13 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             $scope.Products = response.data.Products;
 
             $scope.ProductsForTable = $scope.SalesOrderItemsData.map(item => {
-                const product = $scope.Products.find(product => product.id == item.Product);
+                const product = $scope.Products.find(product => product.Id == item.Product);
                 const catalogueRecord = $scope.CatalogueData.find(record => record.Product == item.Product);
 
                 return {
                     ...item,
-                    ProductName: product ? product.name : 'Unknown',
-                    Availability: catalogueRecord ? catalogueRecord.Availability : 'Unavailable'
+                    ProductName: product ? product.Name : 'Unknown',
+                    Availability: catalogueRecord ? catalogueRecord.Quantity : 'Unavailable'
                 };
             });
 
