@@ -146,11 +146,10 @@ class GenerateGoodsIssueService {
             }
 
             response.setStatus(response.CREATED);
-        }
-
-        catch (e) {
+            return newIssue;
+        } catch (e) {
             response.setStatus(response.BAD_REQUEST);
-            return
+            return { error: e.message }; // Return the error message
         }
     }
 
