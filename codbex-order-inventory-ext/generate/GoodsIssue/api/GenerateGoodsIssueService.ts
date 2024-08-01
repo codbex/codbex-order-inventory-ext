@@ -154,44 +154,43 @@ class GenerateGoodsIssueService {
         }
     }
 
-    //POST method that gets a list in the body of salesOrderItems and creates GoodsIssueItems of them
-    // const goodsIssueItem = {
-    //                         "GoodsIssue": $scope.GoodsIssue.Id,
-    //                         "Product": orderItem.Product,
-    //                         "ProductName": orderItem.ProductName,
-    //                         "Quantity": orderItem.Quantity,
-    //                         "UoM": orderItem.UoM,
-    //                         "Price": orderItem.Price,
-    //                         "Net": orderItem.Net,
-    //                         "VAT": orderItem.VAT,
-    //                         "Gross": orderItem.Gross
-    //                     };
     @Post("/goodsIssueItems")
-    async addGoodsIssueItems(body: any[], response: any) {
+    addGoodsIssueItems(body: any[], ctx: any) {
         try {
-            const requiredFields = ["GoodsIssue", "Product", "ProductName", "Quantity", "UoM", "Price", "Net", "VAT", "Gross"];
+            const requiredFields = ["GoodsIssue", "Product", "Quantity", "UoM", "Price", "Net", "VAT", "Gross"];
+
+            if (!Array.isArray(body)) {
+                response.setStatus(response.BAD_REQUEST);
+                return {
+                    error: "Request body must be an array of items"
+                };
+            }
 
             for (const item of body) {
                 for (const field of requiredFields) {
                     if (!item.hasOwnProperty(field)) {
                         response.setStatus(response.BAD_REQUEST);
-                        response.send({ error: `Missing field: ${field}` });
-                        return;
+                        return {
+                            error: `Missing required field in item: ${field}`
+                        };
                     }
                 }
-
-                const updatedItem = await this.goodsIssueItemDao.create(item);
+                const updatedItem = this.goodsIssueItemDao.create(item);
 
                 if (!updatedItem) {
-                    throw new Error("Failed to update GoodsIssueItem");
+                    throw new Error("Failed to create GoodsIssueItem");
                 }
             }
 
             response.setStatus(response.CREATED);
-            response.send({ message: "All items updated successfully" });
+            return {
+                message: "All items successfully created"
+            };
         } catch (e) {
             response.setStatus(response.BAD_REQUEST);
-            return
+            return {
+                error: e.message
+            };
         }
     }
 
@@ -200,18 +199,54 @@ class GenerateGoodsIssueService {
     //PUT method that gets a list of SalesOrderItems in the body and updates each item
 
     @Put("/salesOrderItems")
-    async updateSalesOrderItems(body: any[], response: any) {
+    updateSalesOrderItems(body: any[], ctx: any) {
         try {
+            const requiredFields = [
+                "Id",
+                "SalesOrder",
+                "Product",
+                "Quantity",
+                "UoM",
+                "Price",
+                "NET",
+                "VAT",
+                "Gross",
+                "SalesOrderItemStatus",
+                "Availability"
+            ];
+
+            if (!Array.isArray(body)) {
+                response.setStatus(response.BAD_REQUEST);
+                return {
+                    error: "Request body must be an array of items"
+                };
+            }
+
             for (const item of body) {
-                await this.salesOrderItemDao.update(item);
+                for (const field of requiredFields) {
+                    if (!item.hasOwnProperty(field)) {
+                        response.setStatus(response.BAD_REQUEST);
+                        return {
+                            error: `Missing required field in item: ${field}`
+                        };
+                    }
+                }
+
+                this.salesOrderItemDao.update(item);
+
             }
 
             response.setStatus(response.OK);
-            response.send({ message: "All items updated successfully" });
+            return {
+                message: "All items successfully updated"
+            };
         } catch (e) {
             response.setStatus(response.BAD_REQUEST);
-            return
+            return {
+                error: e.message
+            };
         }
     }
+
 
 }
