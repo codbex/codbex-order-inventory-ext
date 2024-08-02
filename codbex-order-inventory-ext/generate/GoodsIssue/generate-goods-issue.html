@@ -35,7 +35,8 @@
                             </thead>
                             <tbody>
                                 <tr ng-repeat="item in ProductsForTable">
-                                    <td><input type="checkbox" ng-model="item.selected" /></td>
+                                    <td><input type="checkbox" ng-model="item.selected"
+                                            ng-disabled="item.Availability === 'Unavailable'" /></td>
                                     <td>{{item.ProductName}}</td>
                                     <td>{{item.Quantity}}</td>
                                     <td>{{item.Availability}}</td>

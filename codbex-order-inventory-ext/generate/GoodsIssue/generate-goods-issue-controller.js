@@ -12,7 +12,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const goodsIssueUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/goodsIssue";
     const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/GoodsIssue/api/GenerateGoodsIssueService.ts/salesOrderItems/";
 
-    // Fetch the initial data
     $http.get(salesOrderDataUrl)
         .then(function (response) {
             $scope.SalesOrderData = response.data;
@@ -35,12 +34,22 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                 const product = $scope.Products.find(product => product.Id == item.Product);
                 const catalogueRecord = $scope.CatalogueData.find(record => record.Product == item.Product);
 
-                return {
-                    ...item,
-                    ProductName: product ? product.Name : 'Unknown',
-                    Availability: catalogueRecord ? catalogueRecord.Quantity : 'Unavailable'
-                };
+                if (catalogueRecord) {
+                    return {
+                        ...item,
+                        ProductName: product ? product.Name : 'Unknown',
+                        Availability: catalogueRecord.Quantity > 0 ? catalogueRecord.Quantity : 'Unavailable'
+                    };
+                } else {
+                    return null;
+                }
+            }).filter(item => item !== null);
+
+
+            $scope.ProductsForTable = $scope.ProductsForTable.filter(function (item) {
+                return item.SalesOrderItemStatus == 1 || item.SalesOrderItemStatus == 3;
             });
+
         })
         .catch(function (error) {
             console.error("Error retrieving data:", error);
@@ -49,8 +58,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     $scope.generateGoodsIssue = function () {
         const itemsForIssue = $scope.ProductsForTable.filter(item => item.selected);
 
-        console.log("itemsForIssue", itemsForIssue);
-
         if (itemsForIssue.length > 0) {
             $http.post(goodsIssueUrl, $scope.SalesOrderData)
                 .then(function (response) {
@@ -58,8 +65,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                     if (!goodsIssueId) {
                         throw new Error("Goods Issue creation failed, no ID returned.");
                     }
-
-                    console.log("Goods issue ID:", goodsIssueId);
 
                     const goodsIssueItems = itemsForIssue.map(orderItem => ({
                         "GoodsIssue": goodsIssueId,

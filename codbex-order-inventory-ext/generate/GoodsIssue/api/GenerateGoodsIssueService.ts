@@ -149,7 +149,7 @@ class GenerateGoodsIssueService {
             return newIssue;
         } catch (e) {
             response.setStatus(response.BAD_REQUEST);
-            return { error: e.message }; // Return the error message
+            return { error: e.message };
         }
     }
 
@@ -192,10 +192,6 @@ class GenerateGoodsIssueService {
             };
         }
     }
-
-
-
-    //PUT method that gets a list of SalesOrderItems in the body and updates each item
 
     @Put("/salesOrderItems")
     updateSalesOrderItems(body: any[], ctx: any) {
