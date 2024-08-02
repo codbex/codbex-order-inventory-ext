@@ -45,7 +45,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                 }
             }).filter(item => item !== null);
 
-
             $scope.ProductsForTable = $scope.ProductsForTable.filter(function (item) {
                 return item.SalesOrderItemStatus == 1 || item.SalesOrderItemStatus == 3;
             });
@@ -66,16 +65,19 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                         throw new Error("Goods Issue creation failed, no ID returned.");
                     }
 
-                    const goodsIssueItems = itemsForIssue.map(orderItem => ({
-                        "GoodsIssue": goodsIssueId,
-                        "Product": orderItem.Product,
-                        "Quantity": orderItem.Quantity,
-                        "UoM": orderItem.UoM,
-                        "Price": orderItem.Price,
-                        "Net": orderItem.Net,
-                        "VAT": orderItem.VAT,
-                        "Gross": orderItem.Gross
-                    }));
+                    const goodsIssueItems = itemsForIssue.map(orderItem => {
+                        const quantityToIssue = orderItem.Availability < orderItem.Quantity ? orderItem.Availability : orderItem.Quantity;
+                        return {
+                            "GoodsIssue": goodsIssueId,
+                            "Product": orderItem.Product,
+                            "Quantity": quantityToIssue,
+                            "UoM": orderItem.UoM,
+                            "Price": orderItem.Price,
+                            "Net": orderItem.Net,
+                            "VAT": orderItem.VAT,
+                            "Gross": orderItem.Gross
+                        };
+                    });
 
                     console.log("Goods Issue Items JSON:", goodsIssueItems);
 
@@ -90,19 +92,24 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                         });
                 })
                 .then(function () {
-                    const orderItemsToUpdate = itemsForIssue.map(orderItem => ({
-                        "Id": orderItem.Id,
-                        "SalesOrder": orderItem.SalesOrder,
-                        "Product": orderItem.Product,
-                        "Quantity": orderItem.Quantity,
-                        "UoM": orderItem.UoM,
-                        "Price": orderItem.Price,
-                        "NET": orderItem.Net,
-                        "VAT": orderItem.VAT,
-                        "Gross": orderItem.Gross,
-                        "SalesOrderItemStatus": 2,
-                        "Availability": orderItem.Availability
-                    }));
+                    const orderItemsToUpdate = itemsForIssue.map(orderItem => {
+                        const remainingQuantity = orderItem.Quantity - orderItem.Availability;
+                        const status = remainingQuantity > 0 ? 3 : 2;  // 3 if needs restock, 2 if fulfilled
+
+                        return {
+                            "Id": orderItem.Id,
+                            "SalesOrder": orderItem.SalesOrder,
+                            "Product": orderItem.Product,
+                            "Quantity": status === 3 ? remainingQuantity : orderItem.Quantity,
+                            "UoM": orderItem.UoM,
+                            "Price": orderItem.Price,
+                            "NET": orderItem.Net,
+                            "VAT": orderItem.VAT,
+                            "Gross": orderItem.Gross,
+                            "SalesOrderItemStatus": status,
+                            "Availability": orderItem.Availability
+                        };
+                    });
 
                     return $http.put(salesOrderItemsUrl, orderItemsToUpdate);
                 })
@@ -119,14 +126,10 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
         }
     };
 
-
-
-    // Close the dialog
     $scope.closeDialog = function () {
         $scope.showDialog = false;
         messageHub.closeDialogWindow("goods-issue-generate");
     };
 
-    // Display the dialog
     document.getElementById("dialog").style.display = "block";
 }]);
