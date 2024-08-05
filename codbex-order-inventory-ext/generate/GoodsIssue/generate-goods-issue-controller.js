@@ -81,26 +81,37 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
 
                     console.log("Goods Issue Items JSON:", goodsIssueItems);
 
-                    $http.post(goodsIssueItemUrl, goodsIssueItems)
-                        .then(function (response) {
-                            console.log("Response status:", response.status);
-                            console.log("Response data:", response.data);
-                        })
-                        .catch(function (error) {
-                            console.error("Error status:", error.status);
-                            console.error("Error data:", error.data);
-                        });
+                    return $http.post(goodsIssueItemUrl, goodsIssueItems);
                 })
-                .then(function () {
+                .then(function (response) {
+                    console.log("Goods Issue Items creation response status:", response.status);
+                    console.log("Goods Issue Items creation response data:", response.data);
+
+                    const newSalesOrderItems = [];
                     const orderItemsToUpdate = itemsForIssue.map(orderItem => {
                         const remainingQuantity = orderItem.Quantity - orderItem.Availability;
-                        const status = remainingQuantity > 0 ? 3 : 2;  // 3 if needs restock, 2 if fulfilled
+                        const status = remainingQuantity > 0 ? 3 : 2;  // 3 needs restock, 2 issued
+
+                        if (remainingQuantity > 0) {
+                            newSalesOrderItems.push({
+                                "SalesOrder": orderItem.SalesOrder,
+                                "Product": orderItem.Product,
+                                "Quantity": orderItem.Availability,
+                                "UoM": orderItem.UoM,
+                                "Price": orderItem.Price,
+                                "NET": orderItem.Net,
+                                "VAT": orderItem.VAT,
+                                "Gross": orderItem.Gross,
+                                "SalesOrderItemStatus": 2,  // issued
+                                "Availability": orderItem.Availability
+                            });
+                        }
 
                         return {
                             "Id": orderItem.Id,
                             "SalesOrder": orderItem.SalesOrder,
                             "Product": orderItem.Product,
-                            "Quantity": status === 3 ? remainingQuantity : orderItem.Quantity,
+                            "Quantity": remainingQuantity > 0 ? remainingQuantity : orderItem.Quantity,
                             "UoM": orderItem.UoM,
                             "Price": orderItem.Price,
                             "NET": orderItem.Net,
@@ -111,9 +122,19 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                         };
                     });
 
-                    return $http.put(salesOrderItemsUrl, orderItemsToUpdate);
+                    console.log("Order Items to update JSON:", orderItemsToUpdate);
+                    console.log("New Sales Order Items JSON:", newSalesOrderItems);
+
+                    return Promise.all([
+                        $http.put(salesOrderItemsUrl, orderItemsToUpdate),
+                        newSalesOrderItems.length > 0 ? $http.post(salesOrderItemsUrl, newSalesOrderItems) : Promise.resolve()
+                    ]);
                 })
-                .then(function () {
+                .then(function (responses) {
+                    console.log("Order items update response:", responses[0].status, responses[0].data);
+                    if (responses[1]) {
+                        console.log("New sales order items creation response:", responses[1].status, responses[1].data);
+                    }
                     $scope.closeDialog();
                 })
                 .catch(function (error) {
@@ -125,6 +146,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             $scope.closeDialog();
         }
     };
+
 
     $scope.closeDialog = function () {
         $scope.showDialog = false;

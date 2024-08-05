@@ -243,5 +243,28 @@ class GenerateGoodsIssueService {
         }
     }
 
+    @Post("/salesOrderItems")
+    addSalesOrderItem(body: any, ctx: any) {
+        try {
+            ["SalesOrder", "Product", "Quantity", "UoM", "Price", "NET", "VAT", "Gross", "SalesOrderItemStatus"].forEach(elem => {
+                if (!body.hasOwnProperty(elem)) {
+                    response.setStatus(response.BAD_REQUEST);
+                    return;
+                }
+            })
+
+            const newSalesOrderItems = this.salesOrderItemDao.create(body);
+
+            if (!newSalesOrderItems) {
+                throw new Error("Failed to create GoodsIssue");
+            }
+
+            response.setStatus(response.CREATED);
+            return newSalesOrderItems;
+        } catch (e) {
+            response.setStatus(response.BAD_REQUEST);
+            return { error: e.message };
+        }
+    }
 
 }
