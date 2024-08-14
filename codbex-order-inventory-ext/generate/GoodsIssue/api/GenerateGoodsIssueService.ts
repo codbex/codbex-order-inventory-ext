@@ -5,7 +5,7 @@ import { ProductRepository as ProductDao } from "../../../../codbex-products/gen
 import { GoodsIssueRepository as GoodsIssueDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/GoodsIssues/GoodsIssueRepository";
 import { GoodsIssueItemRepository as GoodsIssueItemDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/GoodsIssues/GoodsIssueItemRepository";
 
-import { Controller, Get, Post, Put, Path, response } from "sdk/http";
+import { Controller, Get, Post, Put, response } from "sdk/http";
 
 @Controller
 class GenerateGoodsIssueService {
@@ -174,9 +174,9 @@ class GenerateGoodsIssueService {
                         };
                     }
                 }
-                const updatedItem = this.goodsIssueItemDao.create(item);
+                const createdItem = this.goodsIssueItemDao.create(item);
 
-                if (!updatedItem) {
+                if (!createdItem) {
                     throw new Error("Failed to create GoodsIssueItem");
                 }
             }
@@ -207,7 +207,6 @@ class GenerateGoodsIssueService {
                 "VAT",
                 "Gross",
                 "SalesOrderItemStatus",
-                "Availability"
             ];
 
             if (!Array.isArray(body)) {
