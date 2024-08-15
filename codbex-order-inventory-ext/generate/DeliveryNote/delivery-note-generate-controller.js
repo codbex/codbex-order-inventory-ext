@@ -33,8 +33,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
 
             $scope.ItemsToDeliver = $scope.SalesOrderItemsData.map(item => {
 
-                console.log(item);
-
                 const product = $scope.Products.find(product => product.Id == item.Product);
                 const catalogueRecord = $scope.CatalogueData.find(record => record.Product == item.Product);
 
@@ -74,7 +72,6 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                     }
 
                     const deliveryNoteItems = itemsToDeliver.map(orderItem => {
-                        console.log(orderItem);
 
                         return {
                             "DeliveryNote": deliveryNoteId,
