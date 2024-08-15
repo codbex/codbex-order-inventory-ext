@@ -3,6 +3,8 @@ import { SalesOrderItemRepository as SalesOrderItemDao } from "../../../../codbe
 import { DeliveryNoteRepository as DeliveryNoteDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/DeliveryNote/DeliveryNoteRepository";
 import { DeliveryNoteItemRepository as DeliveryNoteItemDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/DeliveryNote/DeliveryNoteItemRepository";
 import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
+import { CatalogueRepository as CatalogueDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
+
 
 import { Controller, Get, Put, Post, response } from "sdk/http";
 
@@ -14,6 +16,7 @@ class DeliveryNoteGenerateService {
     private readonly deliveryNoteDao;
     private readonly deliveryNoteItemDao;
     private readonly productDao;
+    private readonly catalogueDao;
 
     constructor() {
         this.salesOrderDao = new SalesOrderDao();
@@ -21,6 +24,7 @@ class DeliveryNoteGenerateService {
         this.deliveryNoteDao = new DeliveryNoteDao();
         this.deliveryNoteItemDao = new DeliveryNoteItemDao();
         this.productDao = new ProductDao();
+        this.catalogueDao = new CatalogueDao();
     }
 
     @Get("/salesOrderData/:salesOrderId")
@@ -41,13 +45,12 @@ class DeliveryNoteGenerateService {
             "VAT": salesOrder.VAT,
             "Total": salesOrder.Total,
             "Conditions": salesOrder.Conditions,
-            "PaymentMethod": salesOrder.PaymentMethod,
             "SentMethod": salesOrder.SentMethod,
             "Company": salesOrder.Company,
             "SalesOrderStatus": 1,
             "Operator": salesOrder.Operator,
             "Reference": salesOrder.UUID,
-            "Store": salesOrder.Store
+            "Store": salesOrder.Store,
             "Name": salesOrder.Name
         };
     }
@@ -69,7 +72,8 @@ class DeliveryNoteGenerateService {
         let salesOrderItems = this.salesOrderItemDao.findAll({
             $filter: {
                 equals: {
-                    SalesOrder: salesOrder.Id
+                    SalesOrder: salesOrder.Id,
+                    SalesOrderItemStatus: 2
                 }
             }
         });
@@ -102,6 +106,27 @@ class DeliveryNoteGenerateService {
             return { error: e.message };
         }
     }
+
+    @Get("/catalogueData")
+    public catalogueRecordsData(_: any, ctx: any) {
+        try {
+            let catalogueRecords = this.catalogueDao.findAll();
+
+            if (!catalogueRecords || catalogueRecords.length === 0) {
+                return {
+                    error: "No catalogue records found!"
+                };
+            }
+
+            return {
+                CatalogueRecords: catalogueRecords
+            };
+        } catch (error) {
+            response.setStatus(response.BAD_REQUEST);
+            return "An error occurred while fetching catalogue records!";
+        }
+    }
+
 
     @Post("/deliveryNoteItems")
     addDeliveryNoteItems(body: any[], ctx: any) {

@@ -7,6 +7,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
     const salesOrderDataUrl = `/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderData/${params.id}`;
     const salesOrderItemsUrl = `/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/${params.id}`;
     const productsUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/productData";
+    const catalogueUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/catalogueData";
     const deliveryNoteUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/deliveryNote";
     const deliveryNoteItemUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/deliveryNoteItems";
     const updateSalesOrderItemUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItems";
@@ -17,28 +18,44 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             return $http.get(salesOrderItemsUrl);
         })
         .then(function (response) {
-            $scope.ItemsToDeliver = response.data.ItemsToDeliver.filter(item => {
-                return item.SalesOrderItemStatus == 2;
+            $scope.SalesOrderItemsData = response.data.ItemsToDeliver;
+            return $http.get(catalogueUrl);
+        })
+        .then(function (response) {
+            $scope.CatalogueData = response.data.CatalogueRecords.filter(record => {
+                return record.Store === $scope.SalesOrderData.Store;
             });
             return $http.get(productsUrl);
         })
         .then(function (response) {
-            const products = response.data.Products;
 
-            $scope.ItemsToDeliver = $scope.ItemsToDeliver.map(item => {
-                const product = products.find(prod => prod.Id == item.Product);
-                return {
-                    ...item,
-                    ProductName: product ? product.Name : 'Unknown'
-                };
-            });
+            $scope.Products = response.data.Products;
+
+            $scope.ItemsToDeliver = $scope.SalesOrderItemsData.map(item => {
+
+                console.log(item);
+
+                const product = $scope.Products.find(product => product.Id == item.Product);
+                const catalogueRecord = $scope.CatalogueData.find(record => record.Product == item.Product);
+
+                if (catalogueRecord) {
+                    return {
+                        ...item,
+                        ProductName: product ? product.Name : 'Unknown',
+                        Availability: catalogueRecord.Quantity > 0 ? catalogueRecord.Quantity : 'Unavailable'
+                    };
+                } else {
+                    return null;
+                }
+            }).filter(item => item !== null);
+
         })
         .catch(function (error) {
             console.error("Error retrieving data:", error);
         });
 
     $scope.generateDeliveryNote = function () {
-        const itemsToDeliver = $scope.ItemsToDeliver;
+        const itemsToDeliver = $scope.ItemsToDeliver.filter(item => item.selected);
 
         if (itemsToDeliver.length > 0) {
             const deliveryNoteData = {
@@ -57,6 +74,8 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                     }
 
                     const deliveryNoteItems = itemsToDeliver.map(orderItem => {
+                        console.log(orderItem);
+
                         return {
                             "DeliveryNote": deliveryNoteId,
                             "Product": orderItem.Product,
