@@ -79,13 +79,9 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                         };
                     });
 
-                    console.log("Goods Issue Items JSON:", goodsIssueItems);
-
                     return $http.post(goodsIssueItemUrl, goodsIssueItems);
                 })
-                .then(function (response) {
-                    console.log("Goods Issue Items creation response status:", response.status);
-                    console.log("Goods Issue Items creation response data:", response.data);
+                .then(function () {
 
                     const newSalesOrderItems = [];
                     const orderItemsToUpdate = itemsForIssue.map(orderItem => {
@@ -118,23 +114,15 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                             "VAT": orderItem.VAT,
                             "Gross": orderItem.Gross,
                             "SalesOrderItemStatus": status,
-                            "Availability": orderItem.Availability
                         };
                     });
-
-                    console.log("Order Items to update JSON:", orderItemsToUpdate);
-                    console.log("New Sales Order Items JSON:", newSalesOrderItems);
 
                     return Promise.all([
                         $http.put(salesOrderItemsUrl, orderItemsToUpdate),
                         newSalesOrderItems.length > 0 ? $http.post(salesOrderItemsUrl, newSalesOrderItems) : Promise.resolve()
                     ]);
                 })
-                .then(function (responses) {
-                    console.log("Order items update response:", responses[0].status, responses[0].data);
-                    if (responses[1]) {
-                        console.log("New sales order items creation response:", responses[1].status, responses[1].data);
-                    }
+                .then(function () {
                     $scope.closeDialog();
                 })
                 .catch(function (error) {
