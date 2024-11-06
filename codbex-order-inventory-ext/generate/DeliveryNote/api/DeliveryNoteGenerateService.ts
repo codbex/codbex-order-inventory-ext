@@ -4,7 +4,7 @@ import { DeliveryNoteRepository as DeliveryNoteDao } from "../../../../codbex-in
 import { DeliveryNoteItemRepository as DeliveryNoteItemDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/DeliveryNote/DeliveryNoteItemRepository";
 import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
 import { CatalogueRepository as CatalogueDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
-
+import { CatalogueRepository as CatalogueSetDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueSetRepository"
 
 import { Controller, Get, Put, Post, response } from "sdk/http";
 
@@ -17,6 +17,8 @@ class DeliveryNoteGenerateService {
     private readonly deliveryNoteItemDao;
     private readonly productDao;
     private readonly catalogueDao;
+    private readonly catalogueSetDao;
+
 
     constructor() {
         this.salesOrderDao = new SalesOrderDao();
@@ -25,6 +27,8 @@ class DeliveryNoteGenerateService {
         this.deliveryNoteItemDao = new DeliveryNoteItemDao();
         this.productDao = new ProductDao();
         this.catalogueDao = new CatalogueDao();
+        this.catalogueSetDao = new CatalogueSetDao();
+
     }
 
     @Get("/salesOrderData/:salesOrderId")
@@ -107,6 +111,26 @@ class DeliveryNoteGenerateService {
         }
     }
 
+    @Get("/productData")
+    public productsData(_: any, ctx: any) {
+        try {
+            let products = this.productDao.findAll();
+
+            if (!products || products.length === 0) {
+                return {
+                    error: "No products found!"
+                };
+            }
+
+            return {
+                Products: products
+            };
+        } catch (error) {
+            response.setStatus(response.BAD_REQUEST);
+            return "An error occurred while fetching products!";
+        }
+    }
+
     @Get("/catalogueData")
     public catalogueRecordsData(_: any, ctx: any) {
         try {
@@ -124,6 +148,34 @@ class DeliveryNoteGenerateService {
         } catch (error) {
             response.setStatus(response.BAD_REQUEST);
             return "An error occurred while fetching catalogue records!";
+        }
+    }
+
+    @Get("/catalogueSetData/:catalogueRecordId")
+    public catalogueSetRecordsData(_: any, ctx: any) {
+
+        const catalogueRecordId = ctx.pathParameters.catalogueRecordId;
+
+        let catalogue = this.catalogueDao.findById(catalogueRecordId);
+
+        if (!catalogue) {
+            ctx.status = 404;
+            ctx.body = {
+                error: "Catalogue record not found"
+            };
+            return;
+        }
+
+        let catalogueSets = this.catalogueSetDao.findAll({
+            $filter: {
+                equals: {
+                    catalogue: catalogue.Id
+                }
+            }
+        });
+
+        return {
+            CatalogueSets: catalogueSets
         }
     }
 
@@ -214,26 +266,6 @@ class DeliveryNoteGenerateService {
             return {
                 error: e.message
             };
-        }
-    }
-
-    @Get("/productData")
-    public productsData(_: any, ctx: any) {
-        try {
-            let products = this.productDao.findAll();
-
-            if (!products || products.length === 0) {
-                return {
-                    error: "No products found!"
-                };
-            }
-
-            return {
-                Products: products
-            };
-        } catch (error) {
-            response.setStatus(response.BAD_REQUEST);
-            return "An error occurred while fetching products!";
         }
     }
 }
