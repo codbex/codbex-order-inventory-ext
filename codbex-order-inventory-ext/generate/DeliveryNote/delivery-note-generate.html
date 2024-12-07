@@ -28,16 +28,13 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Select</th>
-                                    <th>Product Name</th>
+                                    <th>Product Id</th>
                                     <th>Quantity</th>
-                                    <th>Availability</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="item in ItemsToDeliver">
+                                <tr ng-repeat="item in SalesOrderItemsData">
                                     <td>{{item.Product}}</td>
-                                    <td>{{item.ProductSet}}</td>
                                     <td>{{item.Quantity}}</td>
                                 </tr>
                             </tbody>

@@ -8,70 +8,68 @@ app.controller('templateController', [
 
         const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderData/" + params.id;
         const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/" + params.id;
-        const catalogueUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/catalogueData/";
         const productSetUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/productSetData/";
-        const deliveryNoteUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/SDeliveryNoteService.ts/";
-        const deliveryNoteItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/SDeliveryNoteItemService.ts/";
+        const deliveryNoteUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteService.ts/";
+        const deliveryNoteItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteItemService.ts/";
 
-        $http.get(salesOrderDataUrl)
-            .then(function (response) {
-                $scope.SalesOrderData = response.data;
-                $scope.StoreId = $scope.SalesOrderData.Store;
+        $http.get(salesOrderDataUrl).then(function (response) {
+            $scope.SalesOrderData = response.data;
+            $scope.StoreId = $scope.SalesOrderData.Store;
+        });
+
+        $http.get(salesOrderItemsUrl).then(function (response) {
+            $scope.SalesOrderItemsData = response.data.ItemsToDeliver;
+            console.log($scope.SalesOrderItemsData);
+
+            $scope.processOrderItems().then(function (result) {
+                $scope.ItemsToDeliver = result;
             });
-
-        $http.get(salesOrderItemsUrl)
-            .then(function (response) {
-                $scope.SalesOrderItemsData = response.data.ItemsToDeliver;
-            });
-
-        // $http.get(catalogueUrl + $scope.StoreId)
-        //     .then(function (response) {
-        //         $scope.CatalogueData = response.data.CatalogueData;
-        //     });
+        });
 
         $scope.processOrderItems = function () {
-            $scope.ItemsToDeliver = [];
-            const selectedItems = $scope.SalesOrderItemsData;
+            const itemsToDeliver = [];
 
-            selectedItems.forEach(item => {
-
+            const fetchPromises = $scope.SalesOrderItemsData.map(item =>
                 $http.get(productSetUrl + item.Product)
                     .then(function (response) {
-                        const productSets = response.data.productSetData.sort((a, b) => b.Ratio - a.Ratio);
+                        const productSets = response.data.ProductSetData;
 
-                        const quantitiesBySet = calculateProductSets(item, productSets);
+                        console.log(`Product Sets for Product ID ${item.Product}:`, productSets);
 
-                        quantitiesBySet.forEach(setItem => {
-                            $scope.ItemsToDeliver.push(setItem);
-                        });
+                        if (Array.isArray(productSets) && productSets.length > 0) {
+                            debugger
+                            const sortedProductSets = productSets.sort((a, b) => b.Ratio - a.Ratio);
+                            const quantitiesBySet = calculateProductSets(item, sortedProductSets);
+
+                            itemsToDeliver.push(...quantitiesBySet);
+                        } else {
+                            console.warn(`No product sets available for Product ID ${item.Product}`);
+                            itemsToDeliver.push(item);
+                        }
                     })
                     .catch(function (error) {
-                        console.error(`Error fetching catalogue sets for CatalogueRecord ID: ${catalogueRecord.Id}`, error);
-                    });
-            });
+                        console.error(`Error fetching product sets for Product ID ${item.Product}`, error);
+                    })
+            );
 
-            if ($scope.SalesOrderItemsData.length === 0) {
-                console.warn("No deliverable items found.");
-            }
+            return Promise.all(fetchPromises).then(() => itemsToDeliver);
         };
 
         function calculateProductSets(product, catalogueSets) {
             const deliveryNoteitems = [];
             let remainingQuantity = product.Quantity;
 
-            catalogueSets.forEach(set => {
-
+            catalogueSets.forEach(productSet => {
                 if (remainingQuantity > 0) {
-                    const neededCount = Math.floor(remainingQuantity / set.Ratio);
+                    const neededCount = Math.floor(remainingQuantity / productSet.Ratio);
 
-                    if (countToUse > 0) {
+                    if (neededCount > 0) {
                         deliveryNoteitems.push({
-                            ProductSet: set.Name,
+                            ProductSet: productSet.Id,
                             Product: product.Id,
                             Quantity: neededCount
                         });
-
-                        remainingQuantity -= neededCount * set.Ratio;
+                        remainingQuantity -= neededCount * productSet.Ratio;
                     }
                 }
             });
@@ -80,37 +78,35 @@ app.controller('templateController', [
         }
 
         $scope.generateDeliveryNote = function () {
+            if ($scope.ItemsToDeliver && $scope.ItemsToDeliver.length > 0) {
+                const deliveryNoteData = {
+                    "Date": new Date(),
+                    "Store": $scope.SalesOrderData.Store,
+                    "Employee": $scope.SalesOrderData.Operator,
+                    "Customer": $scope.SalesOrderData.Customer,
+                    "Company": $scope.SalesOrderData.Company
+                };
 
-            const deliveryNoteData = {
-                "Date": new Date(),
-                "Store": $scope.SalesOrderData.Store,
-                "Employee": $scope.SalesOrderData.Operator,
-                "Customer": $scope.SalesOrderData.Customer,
-                "Company": $scope.SalesOrderData.Company
-            };
-
-            $http.post(deliveryNoteUrl, deliveryNoteData)
-                .then(function (response) {
-                    const deliveryNoteId = response.data;
+                $http.post(deliveryNoteUrl, deliveryNoteData).then(function (response) {
+                    const deliveryNoteId = response.data.Id;
                     if (!deliveryNoteId) {
                         throw new Error("Delivery Note creation failed, no ID returned.");
                     }
 
-                    const deliveryNoteItems = $scope.ItemsToDeliver.map(item => {
-
-                        return {
-                            "DeliveryNote": deliveryNoteId,
-                            "Product": item.Product,
-                            "Quantity": item.Quantity,
-                            "ProductSet": item.ProductSet
-                        };
-                    });
+                    debugger
+                    const deliveryNoteItems = $scope.ItemsToDeliver.map(item => ({
+                        "DeliveryNote": deliveryNoteId,
+                        "Product": item.Product,
+                        "Quantity": item.Quantity,
+                        "ProductSet": item.ProductSet
+                    }));
 
                     deliveryNoteItems.forEach(item => {
                         $http.post(deliveryNoteItemUrl, item);
                     });
                 });
-        }
+            }
+        };
 
         $scope.closeDialog = function () {
             $scope.showDialog = false;
