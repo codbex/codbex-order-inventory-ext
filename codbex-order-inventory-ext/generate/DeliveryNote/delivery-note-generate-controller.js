@@ -6,14 +6,17 @@ app.controller('templateController', [
         const params = ViewParameters.get();
         $scope.showDialog = true;
 
-        const salesOrderDataUrl = `/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderData/${params.id}`;
-        const salesOrderItemsUrl = `/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/${params.id}`;
+        const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderData/" + params.id;
+        const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/" + params.id;
         const catalogueUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/catalogueData/";
-        const catalogueSetUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/catalogueSet/";
+        const productSetUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/productSetData/";
+        const deliveryNoteUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/SDeliveryNoteService.ts/";
+        const deliveryNoteItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/SDeliveryNoteItemService.ts/";
 
         $http.get(salesOrderDataUrl)
             .then(function (response) {
                 $scope.SalesOrderData = response.data;
+                $scope.StoreId = $scope.SalesOrderData.Store;
             });
 
         $http.get(salesOrderItemsUrl)
@@ -21,85 +24,92 @@ app.controller('templateController', [
                 $scope.SalesOrderItemsData = response.data.ItemsToDeliver;
             });
 
-        $http.get(catalogueUrl + $scope.SalesOrderData.Store)
-            .then(function (response) {
-                $scope.CatalogueData = response.data.CatalogueData;
-            });
-
-        // $http.get(catalogueSetUrl + catalogueId)
+        // $http.get(catalogueUrl + $scope.StoreId)
         //     .then(function (response) {
-        //         $scope.CatalogueSetData = response.data.CatalogueSetRecords;
+        //         $scope.CatalogueData = response.data.CatalogueData;
         //     });
 
         $scope.processOrderItems = function () {
             $scope.ItemsToDeliver = [];
+            const selectedItems = $scope.SalesOrderItemsData;
 
-            $scope.SalesOrderItemsData.forEach(item => {
-                // Find catalogue records for the item's product
-                const catalogueRecords = $scope.CatalogueData.filter(record => record.Product === item.Product);
+            selectedItems.forEach(item => {
 
-                if (catalogueRecords && catalogueRecords.length > 0) {
-                    const catalogueRecord = catalogueRecords[0]; // Use the first matching catalogue record
+                $http.get(productSetUrl + item.Product)
+                    .then(function (response) {
+                        const productSets = response.data.productSetData.sort((a, b) => b.Ratio - a.Ratio);
 
-                    // Fetch catalogue sets for the selected catalogue record
-                    $http.get(catalogueSetUrl + catalogueRecord.Id)
-                        .then(function (response) {
-                            const catalogueSets = response.data.CatalogueSetRecords.sort((a, b) => b.Ratio - a.Ratio);
+                        const quantitiesBySet = calculateProductSets(item, productSets);
 
-                            // Calculate quantities by set
-                            const quantitiesBySet = calculateProductSets(item.Quantity, catalogueSets);
-
-                            // Add processed item to ItemsToDeliver
-                            $scope.ItemsToDeliver.push({
-                                ...item,
-                                Availability: catalogueRecord.Quantity > 0 ? catalogueRecord.Quantity : 'Unavailable',
-                                QuantitiesBySet: quantitiesBySet
-                            });
-                        })
-                        .catch(function (error) {
-                            console.error(`Error fetching catalogue sets for CatalogueRecord ID: ${catalogueRecord.Id}`, error);
+                        quantitiesBySet.forEach(setItem => {
+                            $scope.ItemsToDeliver.push(setItem);
                         });
-                } else {
-                    console.warn(`No catalogue record found for product ID: ${item.Product}`);
-                }
+                    })
+                    .catch(function (error) {
+                        console.error(`Error fetching catalogue sets for CatalogueRecord ID: ${catalogueRecord.Id}`, error);
+                    });
             });
 
-            if ($scope.ItemsToDeliver.length === 0) {
+            if ($scope.SalesOrderItemsData.length === 0) {
                 console.warn("No deliverable items found.");
             }
         };
 
-        function calculateProductSets(totalQuantity, catalogueSets) {
-            const quantitiesBySet = [];
-            let remainingQuantity = totalQuantity;
+        function calculateProductSets(product, catalogueSets) {
+            const deliveryNoteitems = [];
+            let remainingQuantity = product.Quantity;
 
-            // Iterate over catalogue sets to calculate quantities
             catalogueSets.forEach(set => {
-                const availableQuantity = set.Quantity || 0;
 
-                // Calculate how many sets can be used
-                const neededCount = Math.floor(remainingQuantity / set.Ratio);
-                const countToUse = Math.min(neededCount, availableQuantity);
+                if (remainingQuantity > 0) {
+                    const neededCount = Math.floor(remainingQuantity / set.Ratio);
 
-                if (countToUse > 0) {
-                    quantitiesBySet.push({
-                        SetName: set.Name,
-                        Count: countToUse
-                    });
+                    if (countToUse > 0) {
+                        deliveryNoteitems.push({
+                            ProductSet: set.Name,
+                            Product: product.Id,
+                            Quantity: neededCount
+                        });
 
-                    remainingQuantity -= countToUse * set.Ratio;
+                        remainingQuantity -= neededCount * set.Ratio;
+                    }
                 }
             });
 
-            // Handle remaining quantity in base units
-            if (remainingQuantity > 0) {
-                quantitiesBySet.push({
-                    SetName: 'BaseUnit',
-                    Count: remainingQuantity
-                });
-            }
+            return deliveryNoteitems;
+        }
 
-            return quantitiesBySet;
+        $scope.generateDeliveryNote = function () {
+
+            const deliveryNoteData = {
+                "Date": new Date(),
+                "Store": $scope.SalesOrderData.Store,
+                "Employee": $scope.SalesOrderData.Operator,
+                "Customer": $scope.SalesOrderData.Customer,
+                "Company": $scope.SalesOrderData.Company
+            };
+
+            $http.post(deliveryNoteUrl, deliveryNoteData)
+                .then(function (response) {
+                    const deliveryNoteId = response.data;
+                    if (!deliveryNoteId) {
+                        throw new Error("Delivery Note creation failed, no ID returned.");
+                    }
+
+                    const deliveryNoteItems = $scope.ItemsToDeliver.map(item => {
+
+                        return {
+                            "DeliveryNote": deliveryNoteId,
+                            "Product": item.Product,
+                            "Quantity": item.Quantity,
+                            "ProductSet": item.ProductSet
+                        };
+                    });
+
+                    deliveryNoteItems.forEach(item => {
+                        $http.post(deliveryNoteItemUrl, item);
+                    });
+                });
         }
 
         $scope.closeDialog = function () {
@@ -108,8 +118,5 @@ app.controller('templateController', [
         };
 
         document.getElementById("dialog").style.display = "block";
-
-        // Initialize data on controller load
-        $scope.initializeData();
     }
 ]);
