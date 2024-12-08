@@ -111,4 +111,54 @@ class DeliveryNoteGenerateService {
             ProductSetData: productSetRecords
         }
     }
+
+    @Put("/updateSalesOrderItem")
+    updateSalesOrderItems(body: any[], ctx: any) {
+        try {
+            const requiredFields = [
+                "Id",
+                "SalesOrder",
+                "Product",
+                "Quantity",
+                "UoM",
+                "Price",
+                "NET",
+                "VATRate",
+                "VAT",
+                "Gross",
+                "SalesOrderItemStatus",
+            ];
+
+            if (!Array.isArray(body)) {
+                response.setStatus(response.BAD_REQUEST);
+                return {
+                    error: "Request body must be an array of items"
+                };
+            }
+
+            for (const item of body) {
+                for (const field of requiredFields) {
+                    if (!item.hasOwnProperty(field)) {
+                        response.setStatus(response.BAD_REQUEST);
+                        return {
+                            error: `Missing required field in item: ${field}`
+                        };
+                    }
+                }
+
+                this.salesOrderItemDao.update(item);
+
+            }
+
+            response.setStatus(response.OK);
+            return {
+                message: "All items successfully updated"
+            };
+        } catch (e) {
+            response.setStatus(response.BAD_REQUEST);
+            return {
+                error: e.message
+            };
+        }
+    }
 }
