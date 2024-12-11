@@ -105,31 +105,20 @@ app.controller('templateController', [
                             $http.post(deliveryNoteItemUrl, item)
                                 .then(function () {
                                     debugger
-                                    const orderItemsToUpdate = $scope.SalesOrderItemsData.map(orderItem => ({
-                                        Id: orderItem.Id,
-                                        SalesOrder: orderItem.SalesOrder,
-                                        Product: orderItem.Product,
-                                        Quantity: orderItem.Quantity,
-                                        UoM: orderItem.UoM,
-                                        Price: orderItem.Price,
-                                        NET: orderItem.Net,
-                                        VATRate: orderItem.VATRate,
-                                        VAT: orderItem.VAT,
-                                        Gross: orderItem.Gross,
-                                        SalesOrderItemStatus: 4,
-                                    }));
+                                    $scope.SalesOrderItemsData.forEach(orderItem => {
+                                        $http.put(updateSalesOrderItemUrl + orderItem.Id)
+                                            .then(function () {
+                                                $scope.closeDialog();
+                                            })
+                                            .catch(function (error) {
+                                                console.error(
+                                                    "Error creating DeliveryNote, DeliveryNote items, or updating SalesOrderItems:",
+                                                    error
+                                                );
+                                                $scope.closeDialog();
+                                            });
+                                    });
 
-                                    $http.put(updateSalesOrderItemUrl, orderItemsToUpdate)
-                                        .then(function () {
-                                            $scope.closeDialog();
-                                        })
-                                        .catch(function (error) {
-                                            console.error(
-                                                "Error creating DeliveryNote, DeliveryNote items, or updating SalesOrderItems:",
-                                                error
-                                            );
-                                            $scope.closeDialog();
-                                        });
                                 })
                                 .catch(function (error) {
                                     console.error("Error creating DeliveryNote items:", error);

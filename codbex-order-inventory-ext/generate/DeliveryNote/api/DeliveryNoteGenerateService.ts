@@ -2,6 +2,7 @@ import { SalesOrderRepository as SalesOrderDao } from "../../../../codbex-orders
 import { SalesOrderItemRepository as SalesOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderItemRepository";
 import { CatalogueRepository as CatalogueDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
 import { ProductPackagingRepository as ProductPackagingDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductPackagingRepository";
+import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
 
 import { Controller, Get, Put, Post, response } from "sdk/http";
 
@@ -12,6 +13,7 @@ class DeliveryNoteGenerateService {
     private readonly salesOrderItemDao;
     private readonly catalogueDao;
     private readonly productPackagingDao;
+    private readonly productDao;
 
 
     constructor() {
@@ -19,6 +21,7 @@ class DeliveryNoteGenerateService {
         this.salesOrderItemDao = new SalesOrderItemDao();
         this.catalogueDao = new CatalogueDao();
         this.productPackagingDao = new ProductPackagingDao();
+        this.productDao = new ProductDao();
 
     }
 
@@ -73,6 +76,14 @@ class DeliveryNoteGenerateService {
             }
         });
 
+        salesOrderItems = salesOrderItems.map(item => {
+            const product = this.productDao.findById(item.Product);
+            return {
+                ...item,
+                ProductName: product?.Name
+            };
+        });
+
         return {
             ItemsToDeliver: salesOrderItems
         };
@@ -112,53 +123,13 @@ class DeliveryNoteGenerateService {
         }
     }
 
-    @Put("/updateSalesOrderItem")
-    updateSalesOrderItems(body: any[], ctx: any) {
-        try {
-            const requiredFields = [
-                "Id",
-                "SalesOrder",
-                "Product",
-                "Quantity",
-                "UoM",
-                "Price",
-                "NET",
-                "VATRate",
-                "VAT",
-                "Gross",
-                "SalesOrderItemStatus",
-            ];
+    @Put("/updateSalesOrderItem/:itemId")
+    updateSalesOrderItems(_: any, ctx: any) {
+        const itemId = ctx.pathParameters.itemId;
+        const item = this.salesOrderItemDao.findById(itemId);
 
-            if (!Array.isArray(body)) {
-                response.setStatus(response.BAD_REQUEST);
-                return {
-                    error: "Request body must be an array of items"
-                };
-            }
+        item.SalesOrderItemStatus = 4;
 
-            for (const item of body) {
-                for (const field of requiredFields) {
-                    if (!item.hasOwnProperty(field)) {
-                        response.setStatus(response.BAD_REQUEST);
-                        return {
-                            error: `Missing required field in item: ${field}`
-                        };
-                    }
-                }
-
-                this.salesOrderItemDao.update(item);
-
-            }
-
-            response.setStatus(response.OK);
-            return {
-                message: "All items successfully updated"
-            };
-        } catch (e) {
-            response.setStatus(response.BAD_REQUEST);
-            return {
-                error: e.message
-            };
-        }
+        this.salesOrderItemDao.update(item);
     }
 }
