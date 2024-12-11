@@ -8,7 +8,7 @@ app.controller('templateController', [
 
         const salesOrderDataUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderData/" + params.id;
         const salesOrderItemsUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/salesOrderItemsData/" + params.id;
-        const productSetUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/productSetData/";
+        const productPackagingUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/productPackagingData/";
         const deliveryNoteUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteService.ts/";
         const deliveryNoteItemUrl = "/services/ts/codbex-inventory/gen/codbex-inventory/api/DeliveryNote/DeliveryNoteItemService.ts/";
         const updateSalesOrderItemUrl = "/services/ts/codbex-order-inventory-ext/generate/DeliveryNote/api/DeliveryNoteGenerateService.ts/updateSalesOrderItem/";
@@ -31,45 +31,45 @@ app.controller('templateController', [
             const itemsToDeliver = [];
 
             const fetchPromises = $scope.SalesOrderItemsData.map(item =>
-                $http.get(productSetUrl + item.Product)
+                $http.get(productPackagingUrl + item.Product)
                     .then(function (response) {
-                        const productSets = response.data.ProductSetData;
+                        const productPackagings = response.data.ProductPackagingData;
 
-                        console.log(`Product Sets for Product ID ${item.Product}:`, productSets);
+                        console.log(`Product Packages for Product ID ${item.Product}:`, productPackagings);
 
-                        if (Array.isArray(productSets) && productSets.length > 0) {
-                            const sortedProductSets = productSets.sort((a, b) => b.Ratio - a.Ratio);
-                            const quantitiesBySet = calculateProductSets(item, sortedProductSets);
+                        if (Array.isArray(productPackagings) && productPackagings.length > 0) {
+                            const sortedProductPackagings = productPackagings.sort((a, b) => b.Ratio - a.Ratio);
+                            const quantitiesByPackage = calculateProductPackaging(item, sortedProductPackagings);
 
-                            itemsToDeliver.push(...quantitiesBySet);
+                            itemsToDeliver.push(...quantitiesByPackage);
                         } else {
-                            console.warn(`No product sets available for Product ID ${item.Product}`);
+                            console.warn(`No product packages available for Product ID ${item.Product}`);
                             itemsToDeliver.push(item);
                         }
                     })
                     .catch(function (error) {
-                        console.error(`Error fetching product sets for Product ID ${item.Product}`, error);
+                        console.error(`Error fetching product packages for Product ID ${item.Product}`, error);
                     })
             );
 
             return Promise.all(fetchPromises).then(() => itemsToDeliver);
         };
 
-        function calculateProductSets(product, catalogueSets) {
+        function calculateProductPackaging(product, productPackagings) {
             const deliveryNoteitems = [];
             let remainingQuantity = product.Quantity;
 
-            catalogueSets.forEach(productSet => {
+            productPackagings.forEach(productPackaging => {
                 if (remainingQuantity > 0) {
-                    const neededCount = Math.floor(remainingQuantity / productSet.Ratio);
+                    const neededCount = Math.floor(remainingQuantity / productPackaging.Ratio);
 
                     if (neededCount > 0) {
                         deliveryNoteitems.push({
-                            ProductSet: productSet.Id,
+                            ProductPackaging: productPackaging.Id,
                             Product: product.Id,
                             Quantity: neededCount
                         });
-                        remainingQuantity -= neededCount * productSet.Ratio;
+                        remainingQuantity -= neededCount * productPackaging.Ratio;
                     }
                 }
             });
@@ -98,7 +98,7 @@ app.controller('templateController', [
                             DeliveryNote: deliveryNoteId,
                             Product: item.Product,
                             Quantity: item.Quantity,
-                            ProductSet: item.ProductSet,
+                            ProductPackaging: item.ProductPackaging,
                         }));
 
                         deliveryNoteItems.forEach(item => {

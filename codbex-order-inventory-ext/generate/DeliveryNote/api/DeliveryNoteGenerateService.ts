@@ -1,7 +1,7 @@
 import { SalesOrderRepository as SalesOrderDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderRepository";
 import { SalesOrderItemRepository as SalesOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderItemRepository";
 import { CatalogueRepository as CatalogueDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
-import { ProductSetRepository as ProductSetDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductSetRepository";
+import { ProductPackagingRepository as ProductPackagingDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductPackagingRepository";
 
 import { Controller, Get, Put, Post, response } from "sdk/http";
 
@@ -11,14 +11,14 @@ class DeliveryNoteGenerateService {
     private readonly salesOrderDao;
     private readonly salesOrderItemDao;
     private readonly catalogueDao;
-    private readonly productSetDao;
+    private readonly productPackagingDao;
 
 
     constructor() {
         this.salesOrderDao = new SalesOrderDao();
         this.salesOrderItemDao = new SalesOrderItemDao();
         this.catalogueDao = new CatalogueDao();
-        this.productSetDao = new ProductSetDao();
+        this.productPackagingDao = new ProductPackagingDao();
 
     }
 
@@ -95,11 +95,11 @@ class DeliveryNoteGenerateService {
         }
     }
 
-    @Get("/productSetData/:productId")
-    public productSetRecordsData(_: any, ctx: any) {
+    @Get("/productPackagingData/:productId")
+    public productPackagingRecordsData(_: any, ctx: any) {
         const productId = ctx.pathParameters.productId;
 
-        let productSetRecords = this.productSetDao.findAll({
+        let productPackagingRecords = this.productPackagingDao.findAll({
             $filter: {
                 equals: {
                     Product: productId
@@ -108,7 +108,7 @@ class DeliveryNoteGenerateService {
         });
 
         return {
-            ProductSetData: productSetRecords
+            ProductPackagingData: productPackagingRecords
         }
     }
 
