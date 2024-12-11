@@ -66,7 +66,7 @@ app.controller('templateController', [
                     if (neededCount > 0) {
                         deliveryNoteitems.push({
                             ProductPackaging: productPackaging.Id,
-                            Product: product.Id,
+                            Product: productPackaging.Product,
                             Quantity: neededCount
                         });
                         remainingQuantity -= neededCount * productPackaging.Ratio;
