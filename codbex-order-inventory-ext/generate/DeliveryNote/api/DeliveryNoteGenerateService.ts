@@ -45,7 +45,7 @@ class DeliveryNoteGenerateService {
             "Conditions": salesOrder.Conditions,
             "SentMethod": salesOrder.SentMethod,
             "Company": salesOrder.Company,
-            "SalesOrderStatus": 1,
+            "Status": salesOrder.Status,
             "Operator": salesOrder.Operator,
             "Reference": salesOrder.UUID,
             "Store": salesOrder.Store,
@@ -71,7 +71,7 @@ class DeliveryNoteGenerateService {
             $filter: {
                 equals: {
                     SalesOrder: salesOrder.Id,
-                    SalesOrderItemStatus: 2 //Status: Issued which means there is availability for this product
+                    Status: 2 //Status: Issued which means there is availability for this product
                 }
             }
         });
@@ -128,7 +128,7 @@ class DeliveryNoteGenerateService {
         const itemId = ctx.pathParameters.itemId;
         const item = this.salesOrderItemDao.findById(itemId);
 
-        item.SalesOrderItemStatus = 4;
+        item.Status = 4;
 
         this.salesOrderItemDao.update(item);
     }

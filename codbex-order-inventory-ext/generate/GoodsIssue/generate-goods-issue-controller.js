@@ -46,7 +46,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
             }).filter(item => item !== null);
 
             $scope.ProductsForTable = $scope.ProductsForTable.filter(function (item) {
-                return item.SalesOrderItemStatus == 1 || item.SalesOrderItemStatus == 3;
+                return item.Status == 1 || item.Status == 3;
             });
 
         })
@@ -98,7 +98,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                                 "NET": orderItem.Net,
                                 "VAT": orderItem.VAT,
                                 "Gross": orderItem.Gross,
-                                "SalesOrderItemStatus": 2,  // issued
+                                "Status": 2,  // issued
                                 "Availability": orderItem.Availability
                             });
                         }
@@ -113,7 +113,7 @@ app.controller('templateController', ['$scope', '$http', 'ViewParameters', 'mess
                             "NET": orderItem.Net,
                             "VAT": orderItem.VAT,
                             "Gross": orderItem.Gross,
-                            "SalesOrderItemStatus": status,
+                            "Status": status,
                         };
                     });
 

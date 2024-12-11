@@ -47,7 +47,7 @@ class GenerateGoodsIssueService {
             "PaymentMethod": salesOrder.PaymentMethod,
             "SentMethod": salesOrder.SentMethod,
             "Company": salesOrder.Company,
-            "SalesOrderStatus": 1,
+            "Status": 1,
             "Operator": salesOrder.Operator,
             "Reference": salesOrder.UUID,
             "Store": salesOrder.Store
@@ -79,7 +79,7 @@ class GenerateGoodsIssueService {
         let itemsForIssue = [];
 
         salesOrderItems.forEach(item => {
-            if (item.SalesOrderItemStatus != 4) {
+            if (item.Status != 4) {
                 itemsForIssue.push(item);
             }
         })
@@ -206,7 +206,7 @@ class GenerateGoodsIssueService {
                 "NET",
                 "VAT",
                 "Gross",
-                "SalesOrderItemStatus",
+                "Status",
             ];
 
             if (!Array.isArray(body)) {
@@ -245,7 +245,7 @@ class GenerateGoodsIssueService {
     @Post("/salesOrderItems")
     addSalesOrderItem(body: any, ctx: any) {
         try {
-            ["SalesOrder", "Product", "Quantity", "UoM", "Price", "NET", "VAT", "Gross", "SalesOrderItemStatus"].forEach(elem => {
+            ["SalesOrder", "Product", "Quantity", "UoM", "Price", "NET", "VAT", "Gross", "Status"].forEach(elem => {
                 if (!body.hasOwnProperty(elem)) {
                     response.setStatus(response.BAD_REQUEST);
                     return;
