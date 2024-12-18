@@ -35,7 +35,7 @@ class GenerateGoodsReceiptService {
             "PaymentMethod": purchaseOrder.PaymentMethod,
             "SentMethod": purchaseOrder.SentMethod,
             "Company": purchaseOrder.Company,
-            "PurchaseOrderStatus": 1,
+            "Status": 1,
             "Operator": purchaseOrder.Operator,
             "Reference": purchaseOrder.UUID,
             "Store": purchaseOrder.Store

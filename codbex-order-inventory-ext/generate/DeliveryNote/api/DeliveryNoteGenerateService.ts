@@ -1,10 +1,8 @@
 import { SalesOrderRepository as SalesOrderDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderRepository";
 import { SalesOrderItemRepository as SalesOrderItemDao } from "../../../../codbex-orders/gen/codbex-orders/dao/SalesOrder/SalesOrderItemRepository";
-import { DeliveryNoteRepository as DeliveryNoteDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/DeliveryNote/DeliveryNoteRepository";
-import { DeliveryNoteItemRepository as DeliveryNoteItemDao } from "../../../../codbex-inventory/gen/codbex-inventory/dao/DeliveryNote/DeliveryNoteItemRepository";
-import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
 import { CatalogueRepository as CatalogueDao } from "../../../../codbex-products/gen/codbex-products/dao/Catalogues/CatalogueRepository";
-
+import { ProductPackagingRepository as ProductPackagingDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductPackagingRepository";
+import { ProductRepository as ProductDao } from "../../../../codbex-products/gen/codbex-products/dao/Products/ProductRepository";
 
 import { Controller, Get, Put, Post, response } from "sdk/http";
 
@@ -13,18 +11,18 @@ class DeliveryNoteGenerateService {
 
     private readonly salesOrderDao;
     private readonly salesOrderItemDao;
-    private readonly deliveryNoteDao;
-    private readonly deliveryNoteItemDao;
-    private readonly productDao;
     private readonly catalogueDao;
+    private readonly productPackagingDao;
+    private readonly productDao;
+
 
     constructor() {
         this.salesOrderDao = new SalesOrderDao();
         this.salesOrderItemDao = new SalesOrderItemDao();
-        this.deliveryNoteDao = new DeliveryNoteDao();
-        this.deliveryNoteItemDao = new DeliveryNoteItemDao();
-        this.productDao = new ProductDao();
         this.catalogueDao = new CatalogueDao();
+        this.productPackagingDao = new ProductPackagingDao();
+        this.productDao = new ProductDao();
+
     }
 
     @Get("/salesOrderData/:salesOrderId")
@@ -47,7 +45,7 @@ class DeliveryNoteGenerateService {
             "Conditions": salesOrder.Conditions,
             "SentMethod": salesOrder.SentMethod,
             "Company": salesOrder.Company,
-            "SalesOrderStatus": 1,
+            "Status": salesOrder.Status,
             "Operator": salesOrder.Operator,
             "Reference": salesOrder.UUID,
             "Store": salesOrder.Store,
@@ -73,167 +71,65 @@ class DeliveryNoteGenerateService {
             $filter: {
                 equals: {
                     SalesOrder: salesOrder.Id,
-                    SalesOrderItemStatus: 2
+                    Status: 2 //Status: Issued which means there is availability for this product
+                }
+            }
+        });
+
+        salesOrderItems = salesOrderItems.map(item => {
+            const product = this.productDao.findById(item.Product);
+            return {
+                ...item,
+                ProductName: product?.Name
+            };
+        });
+
+        return {
+            ItemsToDeliver: salesOrderItems
+        };
+    }
+
+    @Get("/catalogueData/:storeId")
+    public catalogueRecordsData(_: any, ctx: any) {
+        const storeId = ctx.pathParameters.storeId;
+
+        let catalogueRecords = this.catalogueDao.findAll({
+            $filter: {
+                equals: {
+                    Store: storeId
                 }
             }
         });
 
         return {
-            ItemsToDeliver: salesOrderItems
+            CatalogueData: catalogueRecords
         }
     }
 
-    @Post("/deliveryNote")
-    public addDeliveryNote(body: any, ctx: any) {
-        try {
-            ["Date", "Number", "Store", "Company"].forEach(elem => {
-                if (!body.hasOwnProperty(elem)) {
-                    response.setStatus(response.BAD_REQUEST);
-                    return;
-                }
-            })
+    @Get("/productPackagingData/:productId")
+    public productPackagingRecordsData(_: any, ctx: any) {
+        const productId = ctx.pathParameters.productId;
 
-            const newNote = this.deliveryNoteDao.create(body);
-
-            if (!newNote) {
-                throw new Error("Failed to create DeliveryNote!");
-            }
-
-            response.setStatus(response.CREATED);
-            return newNote;
-        } catch (e) {
-            response.setStatus(response.BAD_REQUEST);
-            return { error: e.message };
-        }
-    }
-
-    @Get("/catalogueData")
-    public catalogueRecordsData(_: any, ctx: any) {
-        try {
-            let catalogueRecords = this.catalogueDao.findAll();
-
-            if (!catalogueRecords || catalogueRecords.length === 0) {
-                return {
-                    error: "No catalogue records found!"
-                };
-            }
-
-            return {
-                CatalogueRecords: catalogueRecords
-            };
-        } catch (error) {
-            response.setStatus(response.BAD_REQUEST);
-            return "An error occurred while fetching catalogue records!";
-        }
-    }
-
-
-    @Post("/deliveryNoteItems")
-    addDeliveryNoteItems(body: any[], ctx: any) {
-        try {
-            const requiredFields = ["DeliveryNote", "Product", "Quantity", "UoM"];
-
-            if (!Array.isArray(body)) {
-                response.setStatus(response.BAD_REQUEST);
-                return {
-                    error: "Request body must be an array of items"
-                };
-            }
-
-            for (const item of body) {
-                for (const field of requiredFields) {
-                    if (!item.hasOwnProperty(field)) {
-                        response.setStatus(response.BAD_REQUEST);
-                        return {
-                            error: `Missing required field in item: ${field}`
-                        };
-                    }
-                }
-                const createdItem = this.deliveryNoteItemDao.create(item);
-
-                if (!createdItem) {
-                    throw new Error("Failed to create DeliveryNoteItem!");
+        let productPackagingRecords = this.productPackagingDao.findAll({
+            $filter: {
+                equals: {
+                    Product: productId
                 }
             }
+        });
 
-            response.setStatus(response.CREATED);
-            return {
-                message: "All items successfully created"
-            };
-        } catch (e) {
-            response.setStatus(response.BAD_REQUEST);
-            return {
-                error: e.message
-            };
+        return {
+            ProductPackagingData: productPackagingRecords
         }
     }
 
-    @Put("/salesOrderItems")
-    updateSalesOrderItems(body: any[], ctx: any) {
-        try {
-            const requiredFields = [
-                "Id",
-                "SalesOrder",
-                "Product",
-                "Quantity",
-                "UoM",
-                "Price",
-                "NET",
-                "VAT",
-                "Gross",
-                "SalesOrderItemStatus",
-            ];
+    @Put("/updateSalesOrderItem/:itemId")
+    updateSalesOrderItems(_: any, ctx: any) {
+        const itemId = ctx.pathParameters.itemId;
+        const item = this.salesOrderItemDao.findById(itemId);
 
-            if (!Array.isArray(body)) {
-                response.setStatus(response.BAD_REQUEST);
-                return {
-                    error: "Request body must be an array of items"
-                };
-            }
+        item.Status = 4;
 
-            for (const item of body) {
-                for (const field of requiredFields) {
-                    if (!item.hasOwnProperty(field)) {
-                        response.setStatus(response.BAD_REQUEST);
-                        return {
-                            error: `Missing required field in item: ${field}`
-                        };
-                    }
-                }
-
-                this.salesOrderItemDao.update(item);
-
-            }
-
-            response.setStatus(response.OK);
-            return {
-                message: "All items successfully updated"
-            };
-        } catch (e) {
-            response.setStatus(response.BAD_REQUEST);
-            return {
-                error: e.message
-            };
-        }
-    }
-
-    @Get("/productData")
-    public productsData(_: any, ctx: any) {
-        try {
-            let products = this.productDao.findAll();
-
-            if (!products || products.length === 0) {
-                return {
-                    error: "No products found!"
-                };
-            }
-
-            return {
-                Products: products
-            };
-        } catch (error) {
-            response.setStatus(response.BAD_REQUEST);
-            return "An error occurred while fetching products!";
-        }
+        this.salesOrderItemDao.update(item);
     }
 }
