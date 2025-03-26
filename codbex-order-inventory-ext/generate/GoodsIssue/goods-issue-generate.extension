@@ -1,5 +1,6 @@
 {
     "module": "codbex-order-inventory-ext/generate/GoodsIssue/goods-issue-generate.js",
     "extensionPoint": "codbex-orders-custom-action",
-    "description": "Generate Goods Issue From Sales Order Custom Action"
+    "description": "Generate Goods Issue From Sales Order Custom Action",
+    "role": "codbex-inventory.GoodsIssues.GoodsIssueReadOnly,codbex-inventory.GoodsIssues.GoodsIssueFullAccess,codbex-inventory.GoodsIssues.GoodsIssueItemReadOnly,codbex-inventory.GoodsIssues.GoodsIssueItemFullAccess"
 }
