@@ -1,5 +1,6 @@
 {
     "extensionPoint": "codbex-orders-custom-action",
     "module": "codbex-order-inventory-ext/generate/GoodsReceipt/goods-receipt-generate.js",
-    "description": "Generate Goods Receipt From Purchase Order Custom Action"
+    "description": "Generate Goods Receipt From Purchase Order Custom Action",
+    "role": "codbex-inventory.GoodsReceipts.GoodsReceiptReadOnly,codbex-inventory.GoodsReceipts.GoodsReceiptFullAccess,codbex-inventory.GoodsReceipts.GoodsReceiptItemReadOnly,codbex-inventory.GoodsReceipts.GoodsReceiptItemFullAccess"
 }
